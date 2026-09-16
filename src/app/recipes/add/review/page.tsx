@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -14,17 +12,12 @@ import {
 } from "@/components/ui/select";
 import SectionHeader from "@/components/recipe/section-header";
 import MonoBadge from "@/components/recipe/mono-badge";
-import EditableRowTable, {
-  type EditableRow,
-} from "@/components/recipe/editable-row-table";
+import PageHeader from "@/components/common/page-header";
+import CalorieCard from "@/components/common/calorie-card";
+import EditableRowTable from "@/components/recipe/editable-row-table";
 import { recipeCategories } from "@/lib/mock-data";
-
-const initialRows: EditableRow[] = [
-  { id: "1", name: "Pasta", amount: "250", unit: "g" },
-  { id: "2", name: "Unsalted butter", amount: "2", unit: "tbsp" },
-  { id: "3", name: "Garlic, minced", amount: "4", unit: "cloves" },
-  { id: "4", name: "", amount: "", unit: "" },
-];
+import { PATHNAMES } from "@/lib/pathnames";
+import { useReviewRecipeForm } from "./use-review-recipe-form";
 
 const columns = [
   { key: "name", label: "Name", placeholder: "Not detected" },
@@ -33,41 +26,21 @@ const columns = [
 ];
 
 export default function ReviewRecipePage() {
-  const [rows, setRows] = useState<EditableRow[]>(initialRows);
-  const [nextId, setNextId] = useState(5);
-  const [addingCategory, setAddingCategory] = useState(false);
-  const [category, setCategory] = useState(recipeCategories[0]);
-  const router = useRouter();
-
-  function handleChange(id: string, key: string, value: string) {
-    setRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, [key]: value } : row))
-    );
-  }
-
-  function handleRemove(id: string) {
-    setRows((prev) => prev.filter((row) => row.id !== id));
-  }
-
-  function handleAdd() {
-    setRows((prev) => [...prev, { id: String(nextId), name: "", amount: "", unit: "" }]);
-    setNextId((n) => n + 1);
-  }
+  const {
+    rows,
+    updateRow,
+    removeRow,
+    addRow,
+    category,
+    setCategory,
+    isAddingCategory,
+    toggleAddingCategory,
+    saveRecipe,
+  } = useReviewRecipeForm();
 
   return (
     <main className="flex-1">
-      <div className="flex flex-wrap items-center gap-4 border-b border-border bg-white px-5 py-6 sm:px-10">
-        <Link
-          href="/recipes/add"
-          className="flex items-center gap-1.5 font-sans text-[13px] text-tan"
-        >
-          ← Back
-        </Link>
-        <div className="h-8 w-px bg-border" />
-        <h1 className="font-serif text-2xl font-semibold text-ink">
-          Review &amp; Edit Recipe
-        </h1>
-      </div>
+      <PageHeader backHref="/recipes/add" title="Review & Edit Recipe" />
 
       <div className="mx-auto max-w-[720px] px-5 py-8 pb-20 sm:px-10">
         <div className="mb-7 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[rgba(61,107,79,0.2)] bg-green-tint-bg px-4.5 py-3.5">
@@ -135,9 +108,9 @@ export default function ReviewRecipePage() {
         <EditableRowTable
           rows={rows}
           columns={columns}
-          onChange={handleChange}
-          onRemove={handleRemove}
-          onAdd={handleAdd}
+          onChange={updateRow}
+          onRemove={removeRow}
+          onAdd={addRow}
           addLabel="+ Add ingredient"
         />
         <div className="mb-9" />
@@ -169,7 +142,7 @@ export default function ReviewRecipePage() {
           </Select>
           <MonoBadge variant="green">AUTO-SUGGESTED</MonoBadge>
         </div>
-        {addingCategory && (
+        {isAddingCategory && (
           <Input
             placeholder="New category name"
             className="mb-9 h-auto rounded-md border-border bg-muted px-3.5 py-3 text-sm text-ink"
@@ -177,43 +150,39 @@ export default function ReviewRecipePage() {
         )}
         <button
           type="button"
-          onClick={() => setAddingCategory((v) => !v)}
+          onClick={toggleAddingCategory}
           className="mb-9 block font-sans text-[13px] text-tan underline"
         >
           + Add new category
         </button>
 
         <SectionHeader step="05" label="Calories" />
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-[10px] border border-border bg-white px-5.5 py-4.5">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <span className="font-serif text-xl font-semibold text-ink">
-                ≈ 640 kcal
-              </span>
-              <MonoBadge>ESTIMATED</MonoBadge>
-            </div>
-            <div className="mt-1.5 text-xs text-body-text">
-              1 ingredient used a generic fallback value
-            </div>
-          </div>
-          <Link
-            href="/ingredients"
-            className="font-sans text-[13px] text-tan underline"
-          >
-            Manage ingredient list →
-          </Link>
+        <div className="mb-8">
+          <CalorieCard
+            calories="≈ 640 kcal"
+            badgeLabel="ESTIMATED"
+            note="1 ingredient used a generic fallback value"
+            right={
+              <Link
+                href={PATHNAMES.ingredients}
+                className="font-sans text-[13px] text-tan underline"
+              >
+                Manage ingredient list →
+              </Link>
+            }
+          />
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4">
           <Link
-            href="/recipes/add"
+            href={PATHNAMES.addRecipe}
             className="font-sans text-[13px] text-tan underline"
           >
             Discard
           </Link>
           <button
             type="button"
-            onClick={() => router.push("/recipes")}
+            onClick={saveRecipe}
             className="rounded-md bg-green px-6 py-3 font-sans text-sm font-semibold text-white hover:bg-green-hover"
           >
             Save Recipe

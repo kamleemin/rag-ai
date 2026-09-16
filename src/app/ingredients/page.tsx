@@ -1,38 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import EditableRowTable, {
-  type EditableRow,
-} from "@/components/recipe/editable-row-table";
-import { mockIngredients } from "@/lib/mock-data";
-
-const columns = [
-  { key: "name", label: "Ingredient" },
-  { key: "brand", label: "Brand" },
-  { key: "calories", label: "Calories" },
-];
+import EditableRowTable from "@/components/recipe/editable-row-table";
+import { useIngredientsPage } from "./use-ingredients-page";
+import { INGREDIENT_COLUMNS } from "./const";
 
 export default function IngredientsPage() {
-  const [rows, setRows] = useState<EditableRow[]>(mockIngredients);
-  const [nextId, setNextId] = useState(mockIngredients.length + 1);
-
-  function handleChange(id: string, key: string, value: string) {
-    setRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, [key]: value } : row))
-    );
-  }
-
-  function handleRemove(id: string) {
-    setRows((prev) => prev.filter((row) => row.id !== id));
-  }
-
-  function handleAdd() {
-    setRows((prev) => [
-      ...prev,
-      { id: String(nextId), name: "", brand: "", calories: "" },
-    ]);
-    setNextId((n) => n + 1);
-  }
+  const { rows, updateRow, removeRow, addRow } = useIngredientsPage();
 
   return (
     <main className="flex-1">
@@ -50,10 +23,10 @@ export default function IngredientsPage() {
         </p>
         <EditableRowTable
           rows={rows}
-          columns={columns}
-          onChange={handleChange}
-          onRemove={handleRemove}
-          onAdd={handleAdd}
+          columns={INGREDIENT_COLUMNS}
+          onChange={updateRow}
+          onRemove={removeRow}
+          onAdd={addRow}
           addLabel="+ Add ingredient"
         />
       </div>

@@ -2,14 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
-export type EditableRow = { id: string; [key: string]: string };
-
-type Column = {
-  key: string;
-  label: string;
-  placeholder?: string;
-};
+import type { EditableRow, Column } from "@/types";
 
 const GRID =
   "grid-cols-[minmax(0,2fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_28px]";

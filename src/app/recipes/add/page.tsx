@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -13,31 +11,29 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import SectionHeader from "@/components/recipe/section-header";
+import PageHeader from "@/components/common/page-header";
+import CalorieCard from "@/components/common/calorie-card";
 import { recipeCategories } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
-
-type Tab = "video" | "manual";
+import { PATHNAMES } from "@/lib/pathnames";
+import { useAddRecipeForm } from "./use-add-recipe-form";
 
 export default function AddRecipePage() {
-  const [tab, setTab] = useState<Tab>("video");
-  const [addingCategory, setAddingCategory] = useState(false);
-  const [category, setCategory] = useState(recipeCategories[0]);
-  const router = useRouter();
+  const {
+    tab,
+    setTab,
+    category,
+    setCategory,
+    isAddingCategory,
+    toggleAddingCategory,
+    goToGenerating,
+    saveRecipe,
+    handleVideoLinkKeyDown,
+  } = useAddRecipeForm();
 
   return (
     <main className="flex-1">
-      <div className="flex flex-wrap items-center gap-4 border-b border-border bg-white px-5 py-6 sm:px-10">
-        <Link
-          href="/recipes"
-          className="flex items-center gap-1.5 font-sans text-[13px] text-tan"
-        >
-          ← Back
-        </Link>
-        <div className="h-8 w-px bg-border" />
-        <h1 className="font-serif text-2xl font-semibold text-ink">
-          Add a Recipe
-        </h1>
-      </div>
+      <PageHeader backHref="/recipes" title="Add a Recipe" />
 
       <div className="mx-auto max-w-[720px] px-5 py-8 pb-20 sm:px-10">
         <div className="mb-7 inline-flex overflow-hidden rounded-lg border border-border">
@@ -77,17 +73,12 @@ export default function AddRecipePage() {
             <div className="flex flex-wrap gap-3">
               <Input
                 placeholder="https://www.tiktok.com/@chef/video/..."
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    router.push("/recipes/add/generating");
-                  }
-                }}
+                onKeyDown={handleVideoLinkKeyDown}
                 className="h-auto min-w-[220px] flex-1 rounded-md border-border bg-muted px-3.5 py-3 text-sm text-ink"
               />
               <button
                 type="button"
-                onClick={() => router.push("/recipes/add/generating")}
+                onClick={goToGenerating}
                 className="rounded-md bg-green px-6 py-3 font-sans text-sm font-semibold text-white hover:bg-green-hover"
               >
                 Generate
@@ -154,9 +145,9 @@ export default function AddRecipePage() {
 
             <SectionHeader step="04" label="Category" />
             <Select
-            value={category}
-            onValueChange={(value) => value && setCategory(value)}
-          >
+              value={category}
+              onValueChange={(value) => value && setCategory(value)}
+            >
               <SelectTrigger className="mb-2.5 h-auto w-full rounded-md border-border bg-muted px-3.5 py-3 text-sm text-ink">
                 <SelectValue />
               </SelectTrigger>
@@ -168,7 +159,7 @@ export default function AddRecipePage() {
                 ))}
               </SelectContent>
             </Select>
-            {addingCategory && (
+            {isAddingCategory && (
               <Input
                 placeholder="New category name"
                 className="mb-9 h-auto rounded-md border-border bg-muted px-3.5 py-3 text-sm text-ink"
@@ -176,7 +167,7 @@ export default function AddRecipePage() {
             )}
             <button
               type="button"
-              onClick={() => setAddingCategory((v) => !v)}
+              onClick={toggleAddingCategory}
               className="mb-9 block font-sans text-[13px] text-tan underline"
             >
               + Add new category
@@ -191,26 +182,20 @@ export default function AddRecipePage() {
               className="mb-8 h-auto rounded-md border-border bg-muted px-3.5 py-3 text-sm text-ink"
             />
 
-            <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-[10px] border border-border bg-white px-5.5 py-4.5">
-              <div>
-                <div className="mb-1.5 font-mono text-[10px] tracking-[0.06em] text-tan">
-                  ESTIMATED CALORIES
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <span className="font-serif text-xl font-semibold text-ink">
-                    ≈ 640 kcal
-                  </span>
-                  <span className="inline-flex items-center rounded-full bg-tan-tint-bg px-2.5 py-1 font-mono text-[10px] tracking-[0.05em] text-tan-tint-text">
-                    ESTIMATED
-                  </span>
-                </div>
-              </div>
-              <Link
-                href="/ingredients"
-                className="font-sans text-[13px] text-tan underline"
-              >
-                Manage ingredient list →
-              </Link>
+            <div className="mb-8">
+              <CalorieCard
+                topLabel="ESTIMATED CALORIES"
+                calories="≈ 640 kcal"
+                badgeLabel="ESTIMATED"
+                right={
+                  <Link
+                    href={PATHNAMES.ingredients}
+                    className="font-sans text-[13px] text-tan underline"
+                  >
+                    Manage ingredient list →
+                  </Link>
+                }
+              />
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -219,7 +204,7 @@ export default function AddRecipePage() {
               </button>
               <button
                 type="button"
-                onClick={() => router.push("/recipes")}
+                onClick={saveRecipe}
                 className="rounded-md bg-green px-6 py-3 font-sans text-sm font-semibold text-white hover:bg-green-hover"
               >
                 Save Recipe

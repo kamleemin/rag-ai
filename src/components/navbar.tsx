@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { PATHNAMES } from "@/lib/pathnames";
 
 const navLinks = [
-  { label: "Home", href: "/" },
-  { label: "All Recipes", href: "/recipes" },
-  { label: "Ingredients", href: "/ingredients" },
+  { label: "Home", href: PATHNAMES.homepage },
+  { label: "All Recipes", href: PATHNAMES.recipes },
+  { label: "Ingredients", href: PATHNAMES.ingredients },
 ];
 
 export default function Navbar() {
@@ -15,15 +16,14 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 flex h-[46px] items-center gap-1.5 overflow-x-auto bg-nav-bg px-5">
-      <Link
-        href="/"
-        className="mr-4 flex-none font-serif text-[17px] font-semibold tracking-wide text-nav-accent italic"
-      >
+      <span className="mr-4 flex-none font-serif text-[17px] font-semibold tracking-wide text-nav-accent italic">
         Kamasak
-      </Link>
+      </span>
       {navLinks.map((link) => {
         const isActive =
-          link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
+          link.href === PATHNAMES.homepage
+            ? pathname === PATHNAMES.homepage
+            : pathname.startsWith(link.href);
         return (
           <Link
             key={link.href}

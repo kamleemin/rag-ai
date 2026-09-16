@@ -1,7 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
-import Link from "next/link";
+import { use } from "react";
 import { notFound } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,46 +13,42 @@ import {
 } from "@/components/ui/select";
 import SectionHeader from "@/components/recipe/section-header";
 import MonoBadge from "@/components/recipe/mono-badge";
-import { mockRecipes, recipeCategories } from "@/lib/mock-data";
+import PageHeader from "@/components/common/page-header";
+import CalorieCard from "@/components/common/calorie-card";
+import { recipeCategories } from "@/lib/mock-data";
+import { useRecipeDetail } from "./use-recipe-detail";
 
 export default function RecipeDetailPage({
   params,
 }: PageProps<"/recipes/[id]">) {
   const { id } = use(params);
-  const recipe = mockRecipes.find((r) => r.id === id);
-  const [editing, setEditing] = useState(false);
-  const [title, setTitle] = useState(recipe?.title ?? "");
-  const [description, setDescription] = useState(recipe?.description ?? "");
-  const [servings, setServings] = useState(String(recipe?.servings ?? ""));
-  const [ingredientsText, setIngredientsText] = useState(
-    recipe?.ingredients.join("\n") ?? ""
-  );
-  const [instructionsText, setInstructionsText] = useState(
-    recipe?.instructions
-      .map((step, i) => `${i + 1}. ${step}`)
-      .join("\n") ?? ""
-  );
-  const [category, setCategory] = useState(
-    recipe?.category ?? recipeCategories[0]
-  );
-  const [tagsText, setTagsText] = useState(recipe?.tags.join(", ") ?? "");
+  const {
+    recipe,
+    editing,
+    toggleEditing,
+    cancelEditing,
+    saveChanges,
+    title,
+    setTitle,
+    description,
+    setDescription,
+    servings,
+    setServings,
+    ingredientsText,
+    setIngredientsText,
+    instructionsText,
+    setInstructionsText,
+    category,
+    setCategory,
+    tagsText,
+    setTagsText,
+  } = useRecipeDetail(id);
 
   if (!recipe) notFound();
 
   return (
     <main className="flex-1">
-      <div className="flex flex-wrap items-center gap-4 border-b border-border bg-white px-5 py-6 sm:px-10">
-        <Link
-          href="/recipes"
-          className="flex items-center gap-1.5 font-sans text-[13px] text-tan"
-        >
-          ← Back
-        </Link>
-        <div className="h-8 w-px bg-border" />
-        <h1 className="font-serif text-2xl font-semibold text-ink">
-          {recipe.title}
-        </h1>
-      </div>
+      <PageHeader backHref="/recipes" title={recipe.title} />
 
       <div className="mx-auto max-w-[720px] px-5 py-8 pb-20 sm:px-10">
         {editing && (
@@ -143,14 +138,14 @@ export default function RecipeDetailPage({
             <div className="mb-9 flex flex-wrap items-center justify-between gap-4">
               <button
                 type="button"
-                onClick={() => setEditing(false)}
+                onClick={cancelEditing}
                 className="font-sans text-[13px] text-tan underline"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={() => setEditing(false)}
+                onClick={saveChanges}
                 className="rounded-md bg-green px-6 py-3 font-sans text-sm font-semibold text-white hover:bg-green-hover"
               >
                 Save changes
@@ -184,16 +179,17 @@ export default function RecipeDetailPage({
           ))}
         </ol>
 
-        <div className="mb-9 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-white px-5.5 py-4.5">
-          <div className="flex items-center gap-2.5">
-            <span className="font-serif text-xl font-semibold text-ink">
-              {recipe.calories}
-            </span>
-            <MonoBadge variant={recipe.calorieConfidence === "exact" ? "green" : "tan"}>
-              {recipe.calorieConfidence === "exact" ? "EXACT" : "ESTIMATED"}
-            </MonoBadge>
-          </div>
-          <span className="text-xs text-tan-tint-text">{recipe.calorieNote}</span>
+        <div className="mb-9">
+          <CalorieCard
+            calories={recipe.calories}
+            badgeLabel={recipe.calorieConfidence === "exact" ? "EXACT" : "ESTIMATED"}
+            badgeVariant={recipe.calorieConfidence === "exact" ? "green" : "tan"}
+            right={
+              <span className="text-xs text-tan-tint-text">
+                {recipe.calorieNote}
+              </span>
+            }
+          />
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -205,7 +201,7 @@ export default function RecipeDetailPage({
           </button>
           <button
             type="button"
-            onClick={() => setEditing((v) => !v)}
+            onClick={toggleEditing}
             className="rounded-md border border-border bg-transparent px-6 py-3 font-sans text-sm font-semibold text-ink"
           >
             Edit recipe

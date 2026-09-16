@@ -1,38 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-
-const STEPS = [
-  { n: "01", label: "WATCHING VIDEO" },
-  { n: "02", label: "EXTRACTING RECIPE" },
-  { n: "03", label: "STRUCTURING DATA" },
-];
-
-const PHRASES = [
-  "Watching the video…",
-  "Extracting the recipe…",
-  "Structuring the details…",
-];
+import {
+  GENERATING_STEPS,
+  getStepStatus,
+  useGeneratingRecipe,
+} from "./use-generating-recipe";
 
 export default function GeneratingRecipePage() {
-  const [stepIndex, setStepIndex] = useState(0);
-  const router = useRouter();
-
-  useEffect(() => {
-    if (stepIndex >= STEPS.length - 1) {
-      const timeout = setTimeout(
-        () => router.push("/recipes/add/review"),
-        900 + 550
-      );
-      return () => clearTimeout(timeout);
-    }
-    const timeout = setTimeout(() => setStepIndex((i) => i + 1), 900);
-    return () => clearTimeout(timeout);
-  }, [stepIndex, router]);
-
-  const genPhrase = PHRASES[Math.min(stepIndex, PHRASES.length - 1)];
+  const { stepIndex, genPhrase } = useGeneratingRecipe();
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-5 py-20">
@@ -51,9 +27,8 @@ export default function GeneratingRecipePage() {
           {genPhrase}
         </h2>
         <div className="flex flex-col gap-3.5 text-left">
-          {STEPS.map((step, i) => {
-            const status =
-              i < stepIndex ? "done" : i === stepIndex ? "active" : "pending";
+          {GENERATING_STEPS.map((step, i) => {
+            const status = getStepStatus(i, stepIndex);
             const lineColor = status === "pending" ? "#DDD9D3" : "#3D6B4F";
             return (
               <div key={step.n} className="flex items-center gap-3">

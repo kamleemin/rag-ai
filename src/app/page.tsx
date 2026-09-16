@@ -1,27 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { suggestionChips } from "@/lib/mock-data";
+import { PATHNAMES } from "@/lib/pathnames";
+import { useHomeSearch } from "./use-home-search";
 
 export default function Home() {
-  const [query, setQuery] = useState("");
-  const router = useRouter();
-
-  function handleAsk(e: React.FormEvent) {
-    e.preventDefault();
-    router.push("/recipes");
-  }
-
-  function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      router.push("/recipes");
-    }
-  }
+  const { query, setQuery, handleAsk, handleInputKeyDown } = useHomeSearch();
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-5 pt-5 pb-20 text-center">
@@ -64,13 +51,13 @@ export default function Home() {
 
       <div className="mt-11 flex gap-6">
         <Link
-          href="/recipes"
+          href={PATHNAMES.recipes}
           className="font-sans text-[13px] text-tan underline"
         >
           Browse All Recipes →
         </Link>
         <Link
-          href="/recipes/add"
+          href={PATHNAMES.addRecipe}
           className="font-sans text-[13px] text-tan underline"
         >
           + Add a recipe

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import MonoBadge from "@/components/recipe/mono-badge";
 import { mockRecipes } from "@/lib/mock-data";
+import { PATHNAMES } from "@/lib/pathnames";
 
 export default function AllRecipesPage() {
   return (
@@ -10,7 +11,7 @@ export default function AllRecipesPage() {
           All Recipes
         </h1>
         <Link
-          href="/recipes/add"
+          href={PATHNAMES.addRecipe}
           className="rounded-md bg-green px-4.5 py-2.5 font-sans text-[13px] font-semibold text-white transition-colors hover:bg-green-hover"
         >
           + Add Recipe
