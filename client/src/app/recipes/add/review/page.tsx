@@ -35,6 +35,18 @@ export default function ReviewRecipePage() {
     setCategory,
     isAddingCategory,
     toggleAddingCategory,
+    title,
+    setTitle,
+    description,
+    setDescription,
+    servings,
+    setServings,
+    prepMinutes,
+    setPrepMinutes,
+    cookMinutes,
+    setCookMinutes,
+    instructions,
+    setInstructions,
     saveRecipe,
   } = useReviewRecipeForm();
 
@@ -61,16 +73,20 @@ export default function ReviewRecipePage() {
           Recipe title
         </label>
         <Input
-          defaultValue="Brown Butter Pasta with Sage"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Not detected — add a title manually."
           className="mb-5 h-auto rounded-md border-border bg-muted px-3.5 py-3 text-sm text-ink"
         />
         <div className="mb-2 flex items-center justify-between">
           <label className="block font-mono text-[10px] tracking-[0.06em] text-tan uppercase">
             Short description
           </label>
-          <MonoBadge>NOT DETECTED</MonoBadge>
+          {!description && <MonoBadge>NOT DETECTED</MonoBadge>}
         </div>
         <Textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           placeholder="Not detected in the video — add a note manually."
           className="mb-5 min-h-14 rounded-md border border-dashed border-border bg-muted px-3.5 py-3 text-sm text-ink"
         />
@@ -80,7 +96,9 @@ export default function ReviewRecipePage() {
               Servings
             </label>
             <Input
-              defaultValue="4"
+              value={servings}
+              onChange={(e) => setServings(e.target.value)}
+              placeholder="—"
               className="h-auto rounded-md border-border bg-muted px-3.5 py-3 text-sm text-ink"
             />
           </div>
@@ -89,7 +107,9 @@ export default function ReviewRecipePage() {
               Prep (min)
             </label>
             <Input
-              defaultValue="20"
+              value={prepMinutes}
+              onChange={(e) => setPrepMinutes(e.target.value)}
+              placeholder="—"
               className="h-auto rounded-md border-border bg-muted px-3.5 py-3 text-sm text-ink"
             />
           </div>
@@ -98,7 +118,9 @@ export default function ReviewRecipePage() {
               Cook (min)
             </label>
             <Input
-              defaultValue="30"
+              value={cookMinutes}
+              onChange={(e) => setCookMinutes(e.target.value)}
+              placeholder="—"
               className="h-auto rounded-md border-border bg-muted px-3.5 py-3 text-sm text-ink"
             />
           </div>
@@ -117,9 +139,9 @@ export default function ReviewRecipePage() {
 
         <SectionHeader step="03" label="Instructions" />
         <Textarea
-          defaultValue={
-            "1. Bring a large pot of salted water to a boil.\n2. Cook pasta until al dente, about 9 minutes.\n3. Melt butter in a skillet over medium heat until browned and fragrant.\n4. Toss pasta with brown butter, garlic, and sage."
-          }
+          value={instructions}
+          onChange={(e) => setInstructions(e.target.value)}
+          placeholder="Not detected in the video — add steps manually."
           className="mb-9 min-h-[120px] rounded-md border-border bg-muted px-3.5 py-3 text-sm text-ink"
         />
 
