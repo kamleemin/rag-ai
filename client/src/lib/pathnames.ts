@@ -3,7 +3,6 @@ export const PATHNAMES = {
   recipes: "/recipes",
   ingredients: "/ingredients",
   addRecipe: "/recipes/add",
-  addRecipeGenerating: "/recipes/add/generating",
   addRecipeReview: "/recipes/add/review",
 } as const;
 

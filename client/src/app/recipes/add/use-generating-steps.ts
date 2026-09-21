@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { PATHNAMES } from "@/lib/pathnames";
 
 export const GENERATING_STEPS = [
   { n: "01", label: "WATCHING VIDEO" },
@@ -14,21 +12,24 @@ const PHRASES = [
   "Structuring the details…",
 ];
 
-export function useGeneratingRecipe() {
+const STEP_DURATION_MS = 1800;
+
+/**
+ * The real extraction call is a single opaque HTTP request, so there's no
+ * server-driven progress to reflect — this just cycles through cosmetic
+ * steps for as long as this component stays mounted (i.e. the mutation is
+ * pending), and holds on the last step rather than claiming to be "done"
+ * before it is.
+ */
+export function useGeneratingSteps() {
   const [stepIndex, setStepIndex] = useState(0);
-  const router = useRouter();
 
   useEffect(() => {
-    if (stepIndex >= GENERATING_STEPS.length - 1) {
-      const timeout = setTimeout(
-        () => router.push(PATHNAMES.addRecipeReview),
-        900 + 550
-      );
-      return () => clearTimeout(timeout);
-    }
-    const timeout = setTimeout(() => setStepIndex((i) => i + 1), 900);
-    return () => clearTimeout(timeout);
-  }, [stepIndex, router]);
+    const interval = setInterval(() => {
+      setStepIndex((i) => Math.min(i + 1, GENERATING_STEPS.length - 1));
+    }, STEP_DURATION_MS);
+    return () => clearInterval(interval);
+  }, []);
 
   const genPhrase = PHRASES[Math.min(stepIndex, PHRASES.length - 1)];
 

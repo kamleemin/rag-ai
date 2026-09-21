@@ -1,17 +1,15 @@
-"use client";
-
 import { cn } from "@/lib/utils";
 import {
   GENERATING_STEPS,
   getStepStatus,
-  useGeneratingRecipe,
-} from "./use-generating-recipe";
+  useGeneratingSteps,
+} from "./use-generating-steps";
 
-export default function GeneratingRecipePage() {
-  const { stepIndex, genPhrase } = useGeneratingRecipe();
+export default function GeneratingRecipe() {
+  const { stepIndex, genPhrase } = useGeneratingSteps();
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-5 py-20">
+    <div className="flex flex-1 flex-col items-center justify-center px-5 py-20">
       <div className="w-full max-w-[420px] text-center">
         <span className="font-mono text-[10px] tracking-[0.08em] text-tan">
           GENERATING RECIPE
@@ -57,6 +55,6 @@ export default function GeneratingRecipePage() {
           })}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

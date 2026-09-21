@@ -17,19 +17,33 @@ import { recipeCategories } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import { PATHNAMES } from "@/lib/pathnames";
 import { useAddRecipeForm } from "./use-add-recipe-form";
+import GeneratingRecipe from "./generating-recipe";
 
 export default function AddRecipePage() {
   const {
     tab,
     setTab,
+    videoUrl,
+    setVideoUrl,
     category,
     setCategory,
     isAddingCategory,
     toggleAddingCategory,
-    goToGenerating,
+    isGenerating,
+    generateError,
+    submitVideoLink,
     saveRecipe,
     handleVideoLinkKeyDown,
   } = useAddRecipeForm();
+
+  if (isGenerating) {
+    return (
+      <main className="flex-1">
+        <PageHeader backHref="/recipes" title="Add a Recipe" />
+        <GeneratingRecipe />
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1">
@@ -73,17 +87,25 @@ export default function AddRecipePage() {
             <div className="flex flex-wrap gap-3">
               <Input
                 placeholder="https://www.tiktok.com/@chef/video/..."
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
                 onKeyDown={handleVideoLinkKeyDown}
                 className="h-auto min-w-[220px] flex-1 rounded-md border-border bg-muted px-3.5 py-3 text-sm text-ink"
               />
               <button
                 type="button"
-                onClick={goToGenerating}
+                onClick={submitVideoLink}
                 className="rounded-md bg-green px-6 py-3 font-sans text-sm font-semibold text-white hover:bg-green-hover"
               >
                 Generate
               </button>
             </div>
+            {generateError && (
+              <p className="mt-3 text-[13px] text-red-600">
+                Couldn&apos;t extract a recipe from that link. Please try
+                again.
+              </p>
+            )}
           </div>
         )}
 
