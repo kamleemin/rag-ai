@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import * as z from "zod";
 import type { ExtractTikTokResponse } from "@rag-ai/shared";
-import { serverEnv } from "@/data/serverEnv";
 
 export const maxDuration = 300;
 
@@ -24,7 +23,6 @@ export async function POST(request: Request) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // "x-api-key": serverEnv.KAMASAK_SERVICE_API_KEY,
         },
         body: JSON.stringify({ url: parsed.data.url }),
       }
