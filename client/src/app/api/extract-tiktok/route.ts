@@ -24,7 +24,7 @@ export async function POST(request: Request) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": serverEnv.KAMASAK_SERVICE_API_KEY,
+          // "x-api-key": serverEnv.KAMASAK_SERVICE_API_KEY,
         },
         body: JSON.stringify({ url: parsed.data.url }),
       }
