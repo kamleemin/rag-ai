@@ -1,14 +1,5 @@
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import type { ExtractionResult } from "@rag-ai/shared";
-import {
-  downloadBestAudio,
-  fetchTikTokMetadata,
-  pickCaptionTrack,
-  type TikTokMetadata,
-} from "./ytdlp.js";
-import { transcribeAudio } from "./transcribe.js";
+import { fetchTikTokMetadata, pickCaptionTrack, type TikTokMetadata } from "./ytdlp.js";
 import { vttToPlainText } from "./vtt.js";
 
 async function getSubtitleTranscript(
@@ -21,17 +12,6 @@ async function getSubtitleTranscript(
   if (!res.ok) return null;
   const vtt = await res.text();
   return vttToPlainText(vtt) || null;
-}
-
-async function getAudioTranscript(url: string): Promise<string | null> {
-  const dir = await mkdtemp(join(tmpdir(), "kamasak-"));
-  const audioPath = join(dir, "audio");
-  try {
-    await downloadBestAudio(url, audioPath);
-    return await transcribeAudio(audioPath);
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
 }
 
 export async function extractFromTikTok(url: string): Promise<ExtractionResult> {
@@ -49,14 +29,6 @@ export async function extractFromTikTok(url: string): Promise<ExtractionResult> 
     transcript = metadata ? await getSubtitleTranscript(metadata) : null;
   } catch (err) {
     console.error("Failed to extract subtitles:", err);
-  }
-
-  if (!transcript) {
-    try {
-      transcript = await getAudioTranscript(url);
-    } catch (err) {
-      console.error("Failed to transcribe audio:", err);
-    }
   }
 
   return { caption, transcript };

@@ -9,11 +9,9 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.32.1",
     "@rag-ai/shared": "*",
     "dotenv": "^17.4.2",
     "express": "^4.21.2",
-    "openai": "^4.73.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {

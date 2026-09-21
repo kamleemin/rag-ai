@@ -1,9 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
 import * as z from "zod";
 import type { ExtractionResult, ParsedRecipe } from "@rag-ai/shared";
 import { env } from "../env.js";
-
-const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
 const parsedRecipeSchema = z.object({
   title: z.string().nullable(),
@@ -22,43 +19,39 @@ const parsedRecipeSchema = z.object({
   category: z.string().nullable(),
 });
 
-const RECIPE_TOOL = {
-  name: "record_recipe",
-  description: "Records the structured recipe extracted from the video text.",
-  input_schema: {
-    type: "object" as const,
-    properties: {
-      title: { type: ["string", "null"] },
-      description: { type: ["string", "null"] },
-      servings: { type: ["string", "null"] },
-      prepMinutes: { type: ["string", "null"] },
-      cookMinutes: { type: ["string", "null"] },
-      ingredients: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            name: { type: "string" },
-            amount: { type: "string" },
-            unit: { type: "string" },
-          },
-          required: ["name", "amount", "unit"],
+const RECIPE_JSON_SCHEMA = {
+  type: "object",
+  properties: {
+    title: { type: ["string", "null"] },
+    description: { type: ["string", "null"] },
+    servings: { type: ["string", "null"] },
+    prepMinutes: { type: ["string", "null"] },
+    cookMinutes: { type: ["string", "null"] },
+    ingredients: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          amount: { type: "string" },
+          unit: { type: "string" },
         },
+        required: ["name", "amount", "unit"],
       },
-      instructions: { type: ["string", "null"] },
-      category: { type: ["string", "null"] },
     },
-    required: [
-      "title",
-      "description",
-      "servings",
-      "prepMinutes",
-      "cookMinutes",
-      "ingredients",
-      "instructions",
-      "category",
-    ],
+    instructions: { type: ["string", "null"] },
+    category: { type: ["string", "null"] },
   },
+  required: [
+    "title",
+    "description",
+    "servings",
+    "prepMinutes",
+    "cookMinutes",
+    "ingredients",
+    "instructions",
+    "category",
+  ],
 };
 
 /**
@@ -74,23 +67,31 @@ export async function parseRecipe(
 
   if (!sourceText.trim()) return null;
 
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-5",
-    max_tokens: 2048,
-    tools: [RECIPE_TOOL],
-    tool_choice: { type: "tool", name: RECIPE_TOOL.name },
-    messages: [
-      {
-        role: "user",
-        content: `Extract a structured recipe from this TikTok video's caption and transcript. Leave a field null (or an empty ingredients array) if it isn't clearly present in the text rather than guessing.\n\n${sourceText}`,
-      },
-    ],
+  const res = await fetch(`${env.OLLAMA_BASE_URL}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: env.OLLAMA_MODEL,
+      stream: false,
+      format: RECIPE_JSON_SCHEMA,
+      messages: [
+        {
+          role: "user",
+          content: `Extract a structured recipe from this TikTok video's caption and transcript. Leave a field null (or an empty ingredients array) if it isn't clearly present in the text rather than guessing.\n\n${sourceText}`,
+        },
+      ],
+    }),
   });
 
-  const toolUse = message.content.find((block) => block.type === "tool_use");
-  if (!toolUse || toolUse.type !== "tool_use") return null;
+  if (!res.ok) {
+    console.error("Ollama request failed:", res.status, await res.text());
+    return null;
+  }
 
-  const result = parsedRecipeSchema.safeParse(toolUse.input);
+  const data = (await res.json()) as { message: { content: string } };
+  const parsed = JSON.parse(data.message.content);
+
+  const result = parsedRecipeSchema.safeParse(parsed);
   if (!result.success) {
     console.error("Recipe parsing returned an unexpected shape:", result.error);
     return null;
