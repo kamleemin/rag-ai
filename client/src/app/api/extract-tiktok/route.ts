@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
   try {
     const res = await fetch(
-      `${serverEnv.KAMASAK_SERVICE_URL}/extract-tiktok`,
+      "http://localhost:8080/extract-tiktok",
       {
         method: "POST",
         headers: {

@@ -4,7 +4,6 @@ import * as z from "zod";
 export const serverEnv = createEnv({
   server: {
     DATABASE_URL: z.url(),
-    KAMASAK_SERVICE_URL: z.url(),
   },
   experimental__runtimeEnv: process.env,
   emptyStringAsUndefined: true,
