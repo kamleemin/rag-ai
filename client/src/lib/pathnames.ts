@@ -1,5 +1,6 @@
 export const PATHNAMES = {
   homepage: "/",
+  login: "/login",
   recipes: "/recipes",
   ingredients: "/ingredients",
   addRecipe: "/recipes/add",

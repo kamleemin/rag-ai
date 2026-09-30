@@ -14,22 +14,20 @@ async function getSubtitleTranscript(
   return vttToPlainText(vtt) || null;
 }
 
+/**
+ * Throws if yt-dlp can't fetch the video at all (private, deleted, network, yt-dlp broken) —
+ * that's a retryable failure, not a recipe. A video with no caption and no subtitles
+ * still succeeds, just with blank text.
+ */
 export async function extractFromTikTok(url: string): Promise<ExtractionResult> {
-  let caption = "";
-  let metadata: TikTokMetadata | null = null;
-  try {
-    metadata = await fetchTikTokMetadata(url);
-    caption = metadata.description;
-  } catch (err) {
-    console.error("Failed to fetch TikTok metadata:", err);
-  }
+  const metadata = await fetchTikTokMetadata(url);
 
   let transcript: string | null = null;
   try {
-    transcript = metadata ? await getSubtitleTranscript(metadata) : null;
+    transcript = await getSubtitleTranscript(metadata);
   } catch (err) {
     console.error("Failed to extract subtitles:", err);
   }
 
-  return { caption, transcript };
+  return { caption: metadata.description, transcript };
 }

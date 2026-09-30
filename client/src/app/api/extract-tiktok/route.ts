@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import * as z from "zod";
-import type { ExtractTikTokResponse } from "@rag-ai/shared";
+import { LOCAL_SERVER_PATHS, type ExtractTikTokResponse } from "@rag-ai/shared";
+import { LOCAL_SERVER_URL } from "@/lib/api-paths";
+import { rejectWithoutSession } from "@/lib/session";
 
 export const maxDuration = 300;
 
 const requestSchema = z.object({ url: z.url() });
 
 export async function POST(request: Request) {
+  const unauthorized = await rejectWithoutSession();
+  if (unauthorized) return unauthorized;
+
   const body = await request.json().catch(() => null);
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) {
@@ -18,7 +23,7 @@ export async function POST(request: Request) {
 
   try {
     const res = await fetch(
-      "http://localhost:8080/extract-tiktok",
+      `${LOCAL_SERVER_URL}${LOCAL_SERVER_PATHS.extractTikTok}`,
       {
         method: "POST",
         headers: {

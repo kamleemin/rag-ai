@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { PATHNAMES } from "@/lib/pathnames";
+import { useLogout } from "./use-logout";
 
 const navLinks = [
   { label: "Home", href: PATHNAMES.homepage },
@@ -13,6 +14,9 @@ const navLinks = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { logOut, isLoggingOut } = useLogout();
+
+  if (pathname === PATHNAMES.login) return null;
 
   return (
     <header className="sticky top-0 z-50 flex h-[46px] items-center gap-1.5 overflow-x-auto bg-nav-bg px-5">
@@ -37,6 +41,14 @@ export default function Navbar() {
           </Link>
         );
       })}
+      <button
+        type="button"
+        onClick={logOut}
+        disabled={isLoggingOut}
+        className="ml-auto flex-none rounded px-3.5 py-2 font-mono text-[10px] font-semibold tracking-[0.06em] whitespace-nowrap text-tan uppercase transition-colors hover:text-white"
+      >
+        Log out
+      </button>
     </header>
   );
 }

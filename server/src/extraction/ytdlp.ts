@@ -14,11 +14,11 @@ export type TikTokMetadata = {
 export async function fetchTikTokMetadata(
   url: string
 ): Promise<TikTokMetadata> {
-  const { stdout } = await execFileAsync("yt-dlp", [
-    "--dump-json",
-    "--skip-download",
-    url,
-  ]);
+  const { stdout } = await execFileAsync(
+    "yt-dlp",
+    ["--dump-json", "--skip-download", "--impersonate", "chrome", url],
+    { timeout: 30_000 }
+  );
   const data = JSON.parse(stdout);
 
   return {

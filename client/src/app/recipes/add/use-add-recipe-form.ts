@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ExtractTikTokResponse } from "@rag-ai/shared";
 import { useCategoryField } from "@/hooks/use-category-field";
 import { useEnterKey } from "@/hooks/use-enter-key";
+import { API_PATHS } from "@/lib/api-paths";
 import { recipeCategories } from "@/lib/mock-data";
 import { PATHNAMES } from "@/lib/pathnames";
 import { EXTRACTED_RECIPE_QUERY_KEY } from "@/lib/query-keys";
@@ -11,7 +12,7 @@ import { EXTRACTED_RECIPE_QUERY_KEY } from "@/lib/query-keys";
 type Tab = "video" | "manual";
 
 async function extractTikTok(url: string): Promise<ExtractTikTokResponse> {
-  const res = await fetch("/api/extract-tiktok", {
+  const res = await fetch(API_PATHS.extractTikTok, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ url }),

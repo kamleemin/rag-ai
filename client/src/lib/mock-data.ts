@@ -1,3 +1,5 @@
+import { RECIPE_CATEGORIES } from "@rag-ai/shared";
+
 export type Recipe = {
   id: string;
   title: string;
@@ -140,11 +142,4 @@ export const suggestionChips = [
   "Show me my pasta recipes",
 ];
 
-export const recipeCategories = [
-  "Pasta",
-  "Breakfast",
-  "Appetizer",
-  "Asian",
-  "Dessert",
-  "Salad",
-];
+export const recipeCategories = RECIPE_CATEGORIES;
