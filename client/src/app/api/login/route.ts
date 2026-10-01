@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import * as z from "zod";
+import { apiError } from "@/lib/api-error";
+import { parseJsonBody } from "@/lib/parse-json-body";
 import {
   createSessionToken,
   isCorrectPassword,
@@ -11,17 +13,13 @@ import {
 const requestSchema = z.object({ password: z.string() });
 
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => null);
-  const parsed = requestSchema.safeParse(body);
+  const parsed = await parseJsonBody(request, requestSchema);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Body must be { password: string }" },
-      { status: 400 }
-    );
+    return parsed.response;
   }
 
   if (!isCorrectPassword(parsed.data.password)) {
-    return NextResponse.json({ error: "Wrong password" }, { status: 401 });
+    return apiError("WRONG_PASSWORD", "Password is incorrect");
   }
 
   (await cookies()).set(SESSION_COOKIE, await createSessionToken(), sessionCookieOptions);

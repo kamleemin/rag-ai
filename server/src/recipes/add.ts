@@ -1,6 +1,7 @@
 import { eq, isNotNull } from "drizzle-orm";
 import {
   normalizeVideoUrl,
+  PendingVideoStatus,
   RECIPE_CATEGORIES,
   type AddRecipeResponse,
   type ParsedRecipe,
@@ -30,7 +31,7 @@ const BLANK_RECIPE: ParsedRecipe = {
   calorieBreakdown: [],
 };
 
-async function findSavedRecipeId(url: string): Promise<number | null> {
+async function findSavedRecipeId(url: string): Promise<string | null> {
   const [row] = await db
     .select({ id: recipes.id })
     .from(recipes)
@@ -85,7 +86,7 @@ export async function addRecipe(rawUrl: string): Promise<AddRecipeResponse> {
   } catch (err) {
     await db
       .update(pendingVideos)
-      .set({ status: "failed" })
+      .set({ status: PendingVideoStatus.Failed })
       .where(eq(pendingVideos.url, url));
     throw err;
   }

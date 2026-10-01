@@ -8,13 +8,16 @@ import {
 } from "@rag-ai/shared";
 import { pendingVideos, recipes, toPendingVideo } from "@rag-ai/shared/db";
 import { db } from "@/db/db";
+import { parseJsonBody } from "@/lib/parse-json-body";
 import { rejectWithoutSession } from "@/lib/session";
 
 const requestSchema = z.object({ url: z.url() });
 
 export async function GET() {
   const unauthorized = await rejectWithoutSession();
-  if (unauthorized) return unauthorized;
+  if (unauthorized) {
+    return unauthorized;
+  }
 
   const rows = await db
     .select()
@@ -29,15 +32,13 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const unauthorized = await rejectWithoutSession();
-  if (unauthorized) return unauthorized;
+  if (unauthorized) {
+    return unauthorized;
+  }
 
-  const body = await request.json().catch(() => null);
-  const parsed = requestSchema.safeParse(body);
+  const parsed = await parseJsonBody(request, requestSchema);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Body must be { url: string }" },
-      { status: 400 }
-    );
+    return parsed.response;
   }
   const url = normalizeVideoUrl(parsed.data.url);
 

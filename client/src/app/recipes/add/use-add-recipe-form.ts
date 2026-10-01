@@ -5,9 +5,12 @@ import type { ExtractTikTokResponse } from "@rag-ai/shared";
 import { useCategoryField } from "@/hooks/use-category-field";
 import { useEnterKey } from "@/hooks/use-enter-key";
 import { API_PATHS } from "@/lib/api-paths";
+import { handleApiError } from "@/lib/api-request-error";
 import { recipeCategories } from "@/lib/mock-data";
 import { PATHNAMES } from "@/lib/pathnames";
 import { EXTRACTED_RECIPE_QUERY_KEY } from "@/lib/query-keys";
+import { toUserMessage } from "@/lib/user-error-messages";
+import { ADD_RECIPE_ERROR_MESSAGES } from "./const";
 
 type Tab = "video" | "manual";
 
@@ -17,7 +20,7 @@ async function extractTikTok(url: string): Promise<ExtractTikTokResponse> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ url }),
   });
-  if (!res.ok) throw new Error("Failed to extract recipe from video");
+  await handleApiError(res);
   return res.json();
 }
 
@@ -37,7 +40,9 @@ export function useAddRecipeForm() {
   });
 
   function submitVideoLink() {
-    if (!videoUrl.trim()) return;
+    if (!videoUrl.trim()) {
+      return;
+    }
     generateRecipe.mutate(videoUrl);
   }
 
@@ -54,7 +59,9 @@ export function useAddRecipeForm() {
     setVideoUrl,
     ...categoryField,
     isGenerating: generateRecipe.isPending,
-    generateError: generateRecipe.isError,
+    generateErrorMessage: generateRecipe.error
+      ? toUserMessage(generateRecipe.error, ADD_RECIPE_ERROR_MESSAGES)
+      : null,
     submitVideoLink,
     saveRecipe,
     handleVideoLinkKeyDown,

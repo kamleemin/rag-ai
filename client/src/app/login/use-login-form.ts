@@ -2,7 +2,10 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { API_PATHS } from "@/lib/api-paths";
+import { handleApiError } from "@/lib/api-request-error";
 import { PATHNAMES } from "@/lib/pathnames";
+import { toUserMessage } from "@/lib/user-error-messages";
+import { LOGIN_ERROR_MESSAGES } from "./const";
 
 async function logIn(password: string): Promise<void> {
   const res = await fetch(API_PATHS.login, {
@@ -10,7 +13,7 @@ async function logIn(password: string): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ password }),
   });
-  if (!res.ok) throw new Error("Wrong password");
+  await handleApiError(res);
 }
 
 export function useLoginForm() {
@@ -27,7 +30,9 @@ export function useLoginForm() {
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!password) return;
+    if (!password) {
+      return;
+    }
     login.mutate(password);
   }
 
@@ -36,6 +41,6 @@ export function useLoginForm() {
     setPassword,
     handleSubmit,
     isLoggingIn: login.isPending,
-    loginError: login.isError,
+    loginErrorMessage: login.error ? toUserMessage(login.error, LOGIN_ERROR_MESSAGES) : null,
   };
 }

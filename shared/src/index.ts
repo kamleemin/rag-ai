@@ -90,7 +90,7 @@ export function normalizeVideoUrl(url: string): string {
 }
 
 export type RecipeSummary = {
-  id: number;
+  id: string;
   title: string | null;
   category: string | null;
   sourceUrl: string | null;
@@ -108,12 +108,12 @@ export type AddRecipeRequest = { url: string };
 
 export type AddRecipeResponse =
   | { status: "saved"; recipe: RecipeSummary }
-  | { status: "already_saved"; recipeId: number };
+  | { status: "already_saved"; recipeId: string };
 
 export type AskRequest = { question: string };
 
 export type AskRecipe = {
-  id: number;
+  id: string;
   title: string | null;
   category: string | null;
   similarity: number;
@@ -123,10 +123,14 @@ export type AskResponse = { answer: string; recipes: AskRecipe[] };
 
 // ---- Cloud (Next.js route handlers) ----
 
-export type PendingVideoStatus = "pending" | "failed";
+/** A saved link's state in the `pending_videos` table. */
+export enum PendingVideoStatus {
+  Pending = "pending",
+  Failed = "failed",
+}
 
 export type PendingVideo = {
-  id: number;
+  id: string;
   url: string;
   status: PendingVideoStatus;
   createdAt: string;
@@ -139,9 +143,6 @@ export type AddPendingVideoResponse =
   | { status: "already_saved" };
 
 export type ListPendingVideosResponse = { pendingVideos: PendingVideo[] };
-
-/** "done" removes the row — the recipe itself now lives in `recipes`. */
-export type UpdatePendingVideoRequest = { status: "done" | "failed" };
 
 export type ListRecipesResponse = { recipes: RecipeSummary[] };
 

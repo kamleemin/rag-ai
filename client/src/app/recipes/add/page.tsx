@@ -30,7 +30,7 @@ export default function AddRecipePage() {
     isAddingCategory,
     toggleAddingCategory,
     isGenerating,
-    generateError,
+    generateErrorMessage,
     submitVideoLink,
     saveRecipe,
     handleVideoLinkKeyDown,
@@ -100,10 +100,9 @@ export default function AddRecipePage() {
                 Generate
               </button>
             </div>
-            {generateError && (
+            {generateErrorMessage && (
               <p className="mt-3 text-[13px] text-red-600">
-                Couldn&apos;t extract a recipe from that link. Please try
-                again.
+                {generateErrorMessage}
               </p>
             )}
           </div>

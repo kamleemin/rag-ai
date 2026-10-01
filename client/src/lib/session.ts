@@ -1,8 +1,11 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import type { NextResponse } from "next/server";
 import { jwtVerify, SignJWT } from "jose";
 import { serverEnv } from "@/data/serverEnv";
+import type { ApiErrorResponse } from "@/types";
+import { apiError } from "./api-error";
+import { captureException } from "./capture-exception";
 
 export const SESSION_COOKIE = "kamasak_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
@@ -34,19 +37,23 @@ export function createSessionToken(): Promise<string> {
 }
 
 export async function isValidSessionToken(token: string | undefined): Promise<boolean> {
-  if (!token) return false;
+  if (!token) {
+    return false;
+  }
   try {
     await jwtVerify(token, signingKey(), { algorithms: ["HS256"] });
     return true;
-  } catch {
+  } catch (error) {
+    // Expired, forged or signed with an old SESSION_SECRET — the user just logs in again.
+    captureException(error, "Rejected session token");
     return false;
   }
 }
 
 /** Returns a 401 response when the request has no valid session cookie, otherwise null. */
-export async function rejectWithoutSession(): Promise<NextResponse | null> {
+export async function rejectWithoutSession(): Promise<NextResponse<ApiErrorResponse> | null> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   return (await isValidSessionToken(token))
     ? null
-    : NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    : apiError("UNAUTHORIZED", "Missing, expired or invalid session cookie");
 }

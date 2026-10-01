@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import * as z from "zod";
 import { LOCAL_SERVER_PATHS, type ExtractTikTokResponse } from "@rag-ai/shared";
 import { LOCAL_SERVER_URL } from "@/lib/api-paths";
+import { apiError } from "@/lib/api-error";
+import { captureException } from "@/lib/capture-exception";
+import { parseJsonBody } from "@/lib/parse-json-body";
 import { rejectWithoutSession } from "@/lib/session";
 
 export const maxDuration = 300;
@@ -10,15 +13,13 @@ const requestSchema = z.object({ url: z.url() });
 
 export async function POST(request: Request) {
   const unauthorized = await rejectWithoutSession();
-  if (unauthorized) return unauthorized;
+  if (unauthorized) {
+    return unauthorized;
+  }
 
-  const body = await request.json().catch(() => null);
-  const parsed = requestSchema.safeParse(body);
+  const parsed = await parseJsonBody(request, requestSchema);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Body must be { url: string }" },
-      { status: 400 }
-    );
+    return parsed.response;
   }
 
   try {
@@ -34,19 +35,16 @@ export async function POST(request: Request) {
     );
 
     if (!res.ok) {
-      return NextResponse.json(
-        { error: "Failed to extract recipe from video" },
-        { status: 502 }
-      );
+      return apiError("EXTRACTION_FAILED", `Extraction service responded ${res.status}`);
     }
 
     const data: ExtractTikTokResponse = await res.json();
     return NextResponse.json(data);
-  } catch (err) {
-    console.error("Failed to reach the extraction service:", err);
-    return NextResponse.json(
-      { error: "Failed to extract recipe from video" },
-      { status: 502 }
+  } catch (error) {
+    captureException(error, "Failed to reach the extraction service");
+    return apiError(
+      "EXTRACTION_SERVICE_UNREACHABLE",
+      `Could not reach the extraction service: ${String(error)}`
     );
   }
 }

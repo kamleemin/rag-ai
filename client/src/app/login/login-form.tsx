@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { useLoginForm } from "./use-login-form";
 
 export default function LoginForm() {
-  const { password, setPassword, handleSubmit, isLoggingIn, loginError } =
+  const { password, setPassword, handleSubmit, isLoggingIn, loginErrorMessage } =
     useLoginForm();
 
   return (
@@ -31,7 +31,7 @@ export default function LoginForm() {
         autoFocus
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        aria-invalid={loginError || undefined}
+        aria-invalid={loginErrorMessage ? true : undefined}
         className="mb-5 h-auto rounded-md border-border bg-muted px-3.5 py-3 text-sm text-ink"
       />
       <button
@@ -41,9 +41,9 @@ export default function LoginForm() {
       >
         {isLoggingIn ? "Logging in…" : "Log in"}
       </button>
-      {loginError && (
+      {loginErrorMessage && (
         <p role="alert" className="mt-3 text-[13px] text-red-600">
-          That password didn&apos;t work. Please try again.
+          {loginErrorMessage}
         </p>
       )}
     </form>

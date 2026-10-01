@@ -8,7 +8,9 @@ import { rejectWithoutSession } from "@/lib/session";
 /** `?needsReview=true` lists only drafts still waiting on the review screen. */
 export async function GET(request: NextRequest) {
   const unauthorized = await rejectWithoutSession();
-  if (unauthorized) return unauthorized;
+  if (unauthorized) {
+    return unauthorized;
+  }
 
   const needsReviewOnly =
     request.nextUrl.searchParams.get("needsReview") === "true";

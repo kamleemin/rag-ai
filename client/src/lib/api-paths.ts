@@ -5,7 +5,7 @@ export const API_PATHS = {
   extractTikTok: "/api/extract-tiktok",
   recipes: "/api/recipes",
   pendingVideos: "/api/pending-videos",
-  pendingVideo: (id: number) => `/api/pending-videos/${id}`,
+  deletePendingVideo: (id: string) => `/api/delete-pending-video/${id}`,
 } as const;
 
 // The recipe server running on your PC (server/ workspace). Its route paths are in
