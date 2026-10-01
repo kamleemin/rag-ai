@@ -18,8 +18,8 @@ export default function IngredientsPage() {
       <div className="mx-auto max-w-[720px] px-5 py-8 pb-20 sm:px-10">
         <p className="mb-7 text-sm leading-relaxed text-body-text">
           Your personal ingredient list — matched first when calculating a
-          recipe&apos;s calories. Anything not listed here falls back to a
-          generic estimate.
+          recipe's calories. Anything not listed here falls back to a
+          generic estimate by USDA food database.
         </p>
         <EditableRowTable
           rows={rows}

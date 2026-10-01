@@ -19,6 +19,15 @@
   }
   ```
 
+- Destructure the fields you use from a hook's result instead of keeping the whole object and reading properties off it:
+
+  ```ts
+  const { mutate, isPending, error } = useLogInMutation({ ... });
+  mutate(password);
+  ```
+
+  rather than `const login = useLogInMutation(...)` + `login.mutate(...)` / `login.isPending`. Exception: don't destructure methods off class instances such as `useQueryClient()` — they rely on `this` and break when pulled off (`const { clear } = queryClient; clear()` throws). Spreading a whole hook result into a return value (`...categoryField`) is fine.
+
 ## Error handling
 
 - Never swallow an error into a placeholder value (`.catch(() => null)`, an empty `catch {}`, returning `false`/`[]` silently). Every caught exception must be logged with `captureException(error, "what was being attempted")` from `src/lib/capture-exception.ts` — not a raw `console.error` — and then handled explicitly (return an error response, a fallback, or rethrow).
@@ -31,6 +40,24 @@
     return parsed.response;
   }
   ```
+
+## API requests
+
+- Every API call the frontend makes lives in `src/requests/`, one file per endpoint, named after it (`login.ts`, `logout.ts`, `extract-tiktok.ts`). Each file has the plain `fetch` function first, then the React Query hook that wraps it directly below:
+
+  ```ts
+  // src/requests/login.ts
+  export async function logIn(password: string): Promise<void> {
+    const res = await fetch(API_PATHS.login, { method: "POST", ... });
+    await handleApiError(res);
+  }
+
+  export function useLogInMutation(options?: RequestMutationOptions<void, string>) {
+    return useMutation({ mutationFn: logIn, ...options });
+  }
+  ```
+- The fetch function takes its URL from `API_PATHS`, calls `handleApiError(res)`, and returns typed data. Writes are `use<Action>Mutation`; reads are `use<Thing>Query` with their key from `src/lib/query-keys.ts`.
+- The request hook accepts options (`RequestMutationOptions` from `src/types.ts`) so the screen hook adds its own behaviour (`onSuccess: () => router.push(...)`). Screen and component hooks never call `fetch` themselves — they import the request hook.
 
 ## API errors: backend is technical, frontend chooses the words
 

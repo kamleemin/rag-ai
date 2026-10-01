@@ -1,18 +1,13 @@
 import { useRouter } from "next/navigation";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { API_PATHS } from "@/lib/api-paths";
+import { useQueryClient } from "@tanstack/react-query";
 import { PATHNAMES } from "@/lib/pathnames";
-
-async function logOut(): Promise<void> {
-  await fetch(API_PATHS.logout, { method: "POST" });
-}
+import { useLogOutMutation } from "@/requests/logout";
 
 export function useLogout() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const logout = useMutation({
-    mutationFn: logOut,
+  const { mutate, isPending } = useLogOutMutation({
     onSuccess: () => {
       queryClient.clear();
       router.replace(PATHNAMES.login);
@@ -20,5 +15,5 @@ export function useLogout() {
     },
   });
 
-  return { logOut: () => logout.mutate(), isLoggingOut: logout.isPending };
+  return { logOut: () => mutate(), isLoggingOut: isPending };
 }
