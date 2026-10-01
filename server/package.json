@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "node --import tsx --watch-path=src --watch-path=../shared/dist --watch-path=.env --watch-preserve-output src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "reembed": "tsx src/scripts/reembed.ts"

@@ -7,8 +7,14 @@
     "shared"
   ],
   "scripts": {
+    "predev": "npm run build:shared",
+    "dev": "concurrently --names shared,server,client --prefix-colors blue,green,magenta \"npm:dev:shared\" \"npm:dev:server\" \"npm:dev:client\"",
     "build:shared": "npm run build --workspace=@rag-ai/shared",
+    "dev:shared": "npm run dev --workspace=@rag-ai/shared",
     "dev:client": "npm run dev --workspace=@rag-ai/client",
     "dev:server": "npm run dev --workspace=@rag-ai/server"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
   }
 }
