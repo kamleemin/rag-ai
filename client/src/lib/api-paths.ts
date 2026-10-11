@@ -4,7 +4,12 @@ export const API_PATHS = {
   logout: "/api/logout",
   extractTikTok: "/api/extract-tiktok",
   recipes: "/api/recipes",
+  recipeByShortId: (shortId: string) => `/api/recipes/${shortId}`,
+  saveRecipe: "/api/save-recipe",
+  updateRecipe: (shortId: string) => `/api/update-recipe/${shortId}`,
+  calculateCalories: "/api/calculate-calories",
   pendingVideos: "/api/pending-videos",
+  addPendingVideo: "/api/add-pending-video",
   deletePendingVideo: (id: string) => `/api/delete-pending-video/${id}`,
 } as const;
 

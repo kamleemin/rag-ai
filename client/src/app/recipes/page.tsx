@@ -1,9 +1,18 @@
+"use client";
+
 import Link from "next/link";
 import MonoBadge from "@/components/recipe/mono-badge";
-import { mockRecipes } from "@/lib/mock-data";
+import { formatCalories } from "@/lib/format-recipe";
 import { PATHNAMES } from "@/lib/pathnames";
+import { recipePath } from "@/lib/recipe-path";
+import { useRecipesQuery } from "@/requests/list-recipes";
 
 export default function AllRecipesPage() {
+  const { data, isLoading, error } = useRecipesQuery();
+
+  const recipes = data?.recipes ?? [];
+  const errorMessage = error ? error.message : null;
+
   return (
     <main className="flex-1">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-white px-5 py-6 sm:px-10">
@@ -19,23 +28,36 @@ export default function AllRecipesPage() {
       </div>
 
       <div className="mx-auto max-w-[720px] px-5 py-8 pb-20 sm:px-10">
-        <div className="mb-2 font-mono text-[11px] tracking-[0.06em] text-tan">
-          {mockRecipes.length} RECIPES
-        </div>
-        {mockRecipes.map((recipe) => (
+        {isLoading && <p className="text-sm text-tan">Loading recipes…</p>}
+        {errorMessage && (
+          <p role="alert" className="text-[13px] text-red-600">
+            {errorMessage}
+          </p>
+        )}
+        {!isLoading && !errorMessage && (
+          <div className="mb-2 font-mono text-[11px] tracking-[0.06em] text-tan">
+            {recipes.length} RECIPES
+          </div>
+        )}
+        {recipes.map((recipe) => (
           <Link
             key={recipe.id}
-            href={`/recipes/${recipe.id}`}
+            href={recipePath(recipe)}
             className="flex items-center justify-between gap-4 border-b border-[#EFEDE7] px-1 py-4.5"
           >
-            <div>
+            <div className="min-w-0">
               <div className="mb-1.5 font-serif text-base font-semibold text-ink">
-                {recipe.title}
+                {recipe.title ?? "Untitled recipe"}
               </div>
+              {recipe.description && (
+                <p className="mb-2 line-clamp-2 text-[13px] leading-relaxed text-body-text">
+                  {recipe.description}
+                </p>
+              )}
               <div className="flex items-center gap-2.5">
-                <MonoBadge variant="green">{recipe.category}</MonoBadge>
+                {recipe.category && <MonoBadge variant="green">{recipe.category}</MonoBadge>}
                 <span className="text-xs text-tan-tint-text">
-                  {recipe.calories}
+                  {formatCalories(recipe.calories)}
                 </span>
               </div>
             </div>

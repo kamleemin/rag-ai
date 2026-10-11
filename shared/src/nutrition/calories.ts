@@ -1,22 +1,23 @@
 import type {
-  CalorieConfidence,
+  CalorieEstimate,
   CalorieLine,
   CalorieReviewReason,
   ParsedIngredient,
-} from "@rag-ai/shared";
-import { ingredients as personalIngredients } from "@rag-ai/shared/db";
-import { db } from "../db/index.js";
+} from "../index.js";
+import type { ingredients as personalIngredients } from "../db/schema.js";
 import { isPackaged, rankFoods, requiredWords } from "./matching.js";
 import { gramsFor, isWeightUnit } from "./portions.js";
 import { getUsdaMeasures, searchUsdaFoods, type UsdaFood, type UsdaMeasure } from "./usda.js";
 
-export type CalorieEstimate = {
-  calories: number | null;
-  calorieConfidence: CalorieConfidence | null;
-  calorieBreakdown: CalorieLine[];
-};
+export type PersonalIngredient = typeof personalIngredients.$inferSelect;
 
-type PersonalIngredient = typeof personalIngredients.$inferSelect;
+/** What each app passes in — the shared code has no env or database of its own. */
+export type CalorieOptions = {
+  /** USDA FoodData Central key (https://fdc.nal.usda.gov/api-key-signup); "DEMO_KEY" works for a quick try. */
+  usdaApiKey: string;
+  /** Rows of the `ingredients` table — checked before USDA. */
+  personalIngredients: PersonalIngredient[];
+};
 
 function describeIngredient(ingredient: ParsedIngredient): string {
   return [ingredient.amount, ingredient.unit, ingredient.name].filter(Boolean).join(" ");
@@ -24,11 +25,6 @@ function describeIngredient(ingredient: ParsedIngredient): string {
 
 function personalLabel(personal: PersonalIngredient): string {
   return [personal.name, personal.brand].filter(Boolean).join(" · ");
-}
-
-async function loadPersonalIngredients(): Promise<Map<string, PersonalIngredient>> {
-  const rows = await db.select().from(personalIngredients);
-  return new Map(rows.map((row) => [row.name.trim().toLowerCase(), row]));
 }
 
 // When the best match has no measure for the unit (Foundation's "Garlic, raw" has no
@@ -39,13 +35,16 @@ const SAME_FOOD_KCAL_TOLERANCE = 0.2;
 
 /** The plain USDA food for an ingredient plus its household measures, or null when USDA failed. */
 async function lookUpUsda(
-  ingredient: ParsedIngredient
+  ingredient: ParsedIngredient,
+  apiKey: string
 ): Promise<{ food: UsdaFood | null; measures: UsdaMeasure[] } | null> {
   try {
     const required = requiredWords(ingredient.name);
-    const ranked = rankFoods(await searchUsdaFoods(required.join(" ")), required);
+    const ranked = rankFoods(await searchUsdaFoods(required.join(" "), apiKey), required);
     const [best] = ranked;
-    if (!best || isWeightUnit(ingredient.unit)) return { food: best ?? null, measures: [] };
+    if (!best || isWeightUnit(ingredient.unit)) {
+      return { food: best ?? null, measures: [] };
+    }
 
     const sameFood = ranked
       .slice(0, MEASURE_ALTERNATIVES)
@@ -55,10 +54,12 @@ async function lookUpUsda(
           best.kcalPer100g * SAME_FOOD_KCAL_TOLERANCE
       );
     for (const food of sameFood) {
-      const measures = await getUsdaMeasures(food);
-      if (gramsFor(ingredient, measures).grams !== null) return { food, measures };
+      const measures = await getUsdaMeasures(food, apiKey);
+      if (gramsFor(ingredient, measures).grams !== null) {
+        return { food, measures };
+      }
     }
-    return { food: best, measures: await getUsdaMeasures(best) };
+    return { food: best, measures: await getUsdaMeasures(best, apiKey) };
   } catch (err) {
     console.error(`USDA lookup failed for "${ingredient.name}":`, err);
     return null;
@@ -67,7 +68,8 @@ async function lookUpUsda(
 
 async function calorieLineFor(
   ingredient: ParsedIngredient,
-  personal: PersonalIngredient | undefined
+  personal: PersonalIngredient | undefined,
+  apiKey: string
 ): Promise<CalorieLine> {
   const needsReview = (
     reviewReason: CalorieReviewReason,
@@ -83,20 +85,28 @@ async function calorieLineFor(
 
   // Packaged items (sauces, seasoning mixes, bread…) vary by brand: they stay blank until
   // you add your brand to your personal list — never a generic USDA value.
-  if (!personal && isPackaged(ingredient)) return needsReview("processed");
+  if (!personal && isPackaged(ingredient)) {
+    return needsReview("processed");
+  }
 
   // A personal entry with a weight ("200 g") needs nothing from USDA. Otherwise USDA
   // still supplies the household measures ("1 cup = 100 g") to turn the amount into grams.
   const lookup =
     personal && isWeightUnit(ingredient.unit)
       ? { food: null, measures: [] }
-      : await lookUpUsda(ingredient);
-  if (!lookup && !personal) return needsReview("lookup_failed");
+      : await lookUpUsda(ingredient, apiKey);
+  if (!lookup && !personal) {
+    return needsReview("lookup_failed");
+  }
   const food = lookup?.food ?? null;
-  if (!food && !personal) return needsReview("no_match");
+  if (!food && !personal) {
+    return needsReview("no_match");
+  }
 
   const weight = gramsFor(ingredient, lookup?.measures ?? []);
-  if (weight.grams === null) return needsReview(weight.reason, food);
+  if (weight.grams === null) {
+    return needsReview(weight.reason, food);
+  }
 
   const kcalPer100g = personal ? personal.kcalPer100g : food!.kcalPer100g;
   return {
@@ -116,17 +126,24 @@ async function calorieLineFor(
  * review screen can ask you for exactly those values.
  */
 export async function estimateCalories(
-  ingredients: ParsedIngredient[]
+  ingredients: ParsedIngredient[],
+  { usdaApiKey, personalIngredients }: CalorieOptions
 ): Promise<CalorieEstimate> {
   if (ingredients.length === 0) {
     return { calories: null, calorieConfidence: null, calorieBreakdown: [] };
   }
 
-  const personalByName = await loadPersonalIngredients();
+  const personalByName = new Map(
+    personalIngredients.map((row) => [row.name.trim().toLowerCase(), row])
+  );
   // All lines in parallel — it's only USDA requests now, no model calls.
   const calorieBreakdown = await Promise.all(
     ingredients.map((ingredient) =>
-      calorieLineFor(ingredient, personalByName.get(ingredient.name.trim().toLowerCase()))
+      calorieLineFor(
+        ingredient,
+        personalByName.get(ingredient.name.trim().toLowerCase()),
+        usdaApiKey
+      )
     )
   );
 

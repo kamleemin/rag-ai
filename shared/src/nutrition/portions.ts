@@ -1,4 +1,4 @@
-import type { ParsedIngredient } from "@rag-ai/shared";
+import type { ParsedIngredient } from "../index.js";
 import type { UsdaMeasure } from "./usda.js";
 import { singular, words } from "./words.js";
 
@@ -36,7 +36,9 @@ export function parseAmount(amount: string): number | null {
   const range = text.split(/\s*(?:-|–|to)\s*/);
   if (range.length === 2) {
     const [low, high] = range.map(parseAmount);
-    if (low !== null && high !== null) return (low + high) / 2;
+    if (low !== null && high !== null) {
+      return (low + high) / 2;
+    }
   }
 
   const parts = text.trim().split(/\s+/);
@@ -56,8 +58,12 @@ function normalizeUnit(unit: string): string {
   // The model sometimes puts preparation notes in the unit: "cloves, minced" → "cloves".
   const trimmed = unit.split(",")[0].trim().replace(/\.$/, "");
   // Recipe shorthand: capital T is tablespoon, lowercase t is teaspoon.
-  if (trimmed === "T") return "tbsp";
-  if (trimmed === "t") return "tsp";
+  if (trimmed === "T") {
+    return "tbsp";
+  }
+  if (trimmed === "t") {
+    return "tsp";
+  }
   return trimmed.toLowerCase();
 }
 
@@ -117,10 +123,14 @@ export function gramsFor(ingredient: ParsedIngredient, measures: UsdaMeasure[]):
 
   // No amount ("pasta water", "chili oil to garnish"): left blank. USDA's "quantity not
   // specified" is a whole serving of the matched food — 255 g for a garnish of chili oil.
-  if (quantity === null) return { grams: null, reason: "no_amount" };
+  if (quantity === null) {
+    return { grams: null, reason: "no_amount" };
+  }
 
   const gramsPerUnit = GRAMS_PER_WEIGHT_UNIT[unit];
-  if (gramsPerUnit !== undefined) return result(quantity * gramsPerUnit);
+  if (gramsPerUnit !== undefined) {
+    return result(quantity * gramsPerUnit);
+  }
 
   // Volume (cup/tbsp/tsp/ml): any volume measure of this food gives its density.
   const unitMl = ML_PER_VOLUME_UNIT[unit];
@@ -132,7 +142,9 @@ export function gramsFor(ingredient: ParsedIngredient, measures: UsdaMeasure[]):
     );
     const reference =
       volumeMeasures.find((m) => volumeMlOf(m.label) === unitMl) ?? volumeMeasures[0];
-    if (!reference) return unknownUnit;
+    if (!reference) {
+      return unknownUnit;
+    }
     const gramsPerMl = reference.grams / (reference.base * volumeMlOf(reference.label)!);
     return result(quantity * unitMl * gramsPerMl);
   }
@@ -144,7 +156,9 @@ export function gramsFor(ingredient: ParsedIngredient, measures: UsdaMeasure[]):
   const measureWith = (word: string) =>
     parsedMeasures.find((m) => words(m.label)[0] === word);
   const counted = measureWith(unit ? singular(unit) : nameWord);
-  if (counted) return result((quantity / counted.base) * counted.grams);
+  if (counted) {
+    return result((quantity / counted.base) * counted.grams);
+  }
 
   // "1/2 small onion", "1 large egg", "1 lime" when USDA only lists a one-item measure —
   // "1 medium", "1 whole", "1 regular carrot", or "1 fruit" (SR Legacy's word for a lime
@@ -154,7 +168,9 @@ export function gramsFor(ingredient: ParsedIngredient, measures: UsdaMeasure[]):
     const oneItem = [nameWord, "medium", "whole", "regular", "fruit"]
       .map(measureWith)
       .find(Boolean);
-    if (oneItem) return result((quantity / oneItem.base) * oneItem.grams * sizeFactor);
+    if (oneItem) {
+      return result((quantity / oneItem.base) * oneItem.grams * sizeFactor);
+    }
   }
   return unknownUnit;
 }

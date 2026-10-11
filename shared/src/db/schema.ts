@@ -25,11 +25,13 @@ export const EMBEDDING_DIMENSIONS = 768;
 
 export const recipes = snakeCase.table("recipes", {
   id: uuid().primaryKey().defaultRandom(),
+  // The readable part of recipe links (/recipes/shio-pan-x7kp2m) — see generateShortId.
+  shortId: text().notNull().unique(),
   title: text(),
   description: text(),
   servings: text(),
-  prepMinutes: text(),
-  cookMinutes: text(),
+  // From the video (stated in it, or estimated from the steps) — never typed in.
+  totalMinutes: integer(),
   ingredients: jsonb().$type<ParsedIngredient[]>().notNull().default([]),
   instructions: text(),
   category: text(),

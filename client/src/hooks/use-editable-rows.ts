@@ -22,5 +22,11 @@ export function useEditableRows<T extends { id: string }>(
     setNextId((n) => n + 1);
   }
 
-  return { rows, updateRow, removeRow, addRow };
+  /** Back to the rows the hook started with. */
+  function resetRows() {
+    setRows(initialRows);
+    setNextId(initialRows.length + 1);
+  }
+
+  return { rows, updateRow, removeRow, addRow, resetRows };
 }

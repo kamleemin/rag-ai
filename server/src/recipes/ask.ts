@@ -13,7 +13,7 @@ const NO_MATCH_ANSWER =
 
 type MatchedRecipe = Pick<
   typeof recipes.$inferSelect,
-  "title" | "category" | "ingredients" | "instructions" | "calories"
+  "title" | "category" | "ingredients" | "instructions" | "calories" | "totalMinutes"
 >;
 
 function formatRecipeForPrompt(recipe: MatchedRecipe): string {
@@ -23,6 +23,7 @@ function formatRecipeForPrompt(recipe: MatchedRecipe): string {
   return [
     `## ${recipe.title ?? "Untitled recipe"}`,
     recipe.category && `Category: ${recipe.category}`,
+    recipe.totalMinutes !== null && `Total time: ${recipe.totalMinutes} min`,
     recipe.calories !== null && `Estimated calories: ${recipe.calories} kcal`,
     ingredients && `Ingredients:\n${ingredients}`,
     recipe.instructions && `Steps:\n${recipe.instructions}`,
@@ -40,11 +41,13 @@ export async function askRecipes(question: string): Promise<AskResponse> {
   const matches = await db
     .select({
       id: recipes.id,
+      shortId: recipes.shortId,
       title: recipes.title,
       category: recipes.category,
       ingredients: recipes.ingredients,
       instructions: recipes.instructions,
       calories: recipes.calories,
+      totalMinutes: recipes.totalMinutes,
       similarity,
     })
     .from(recipes)
@@ -74,8 +77,9 @@ export async function askRecipes(question: string): Promise<AskResponse> {
 
   return {
     answer,
-    recipes: matches.map(({ id, title, category, similarity }) => ({
+    recipes: matches.map(({ id, shortId, title, category, similarity }) => ({
       id,
+      shortId,
       title,
       category,
       similarity: Number(similarity),

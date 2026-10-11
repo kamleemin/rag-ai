@@ -1,9 +1,9 @@
 import { useEditableRows } from "@/hooks/use-editable-rows";
-import { mockIngredients } from "@/lib/mock-data";
 
 export function useIngredientsPage() {
+  // Not connected yet: start from your saved ingredients (the `ingredients` table) here.
   const { rows, updateRow, removeRow, addRow } = useEditableRows(
-    mockIngredients,
+    [],
     (id) => ({ id, name: "", brand: "", calories: "" })
   );
 

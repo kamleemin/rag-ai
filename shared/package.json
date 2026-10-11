@@ -13,6 +13,10 @@
     "./db": {
       "types": "./dist/db/index.d.ts",
       "default": "./dist/db/index.js"
+    },
+    "./nutrition": {
+      "types": "./dist/nutrition/calories.d.ts",
+      "default": "./dist/nutrition/calories.js"
     }
   },
   "scripts": {
@@ -20,10 +24,12 @@
     "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput"
   },
   "peerDependencies": {
-    "drizzle-orm": "^1.0.0-rc.4"
+    "drizzle-orm": "^1.0.0-rc.4",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "drizzle-orm": "^1.0.0-rc.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "zod": "^4.6.5"
   }
 }

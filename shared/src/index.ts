@@ -13,11 +13,19 @@ export type ParsedRecipe = {
   title: string | null;
   description: string | null;
   servings: string | null;
-  prepMinutes: string | null;
-  cookMinutes: string | null;
+  /** Start-to-finish minutes from a video (stated in it, or estimated from the steps); null for recipes typed in. */
+  totalMinutes: number | null;
   ingredients: ParsedIngredient[];
   instructions: string | null;
   category: string | null;
+  /** Sum of the known per-ingredient kcal; null if none could be worked out. */
+  calories: number | null;
+  calorieConfidence: CalorieConfidence | null;
+  calorieBreakdown: CalorieLine[];
+};
+
+/** A recipe's calories as worked out from its ingredients ("Calculate calories" in the recipe form). */
+export type CalorieEstimate = {
   /** Sum of the known per-ingredient kcal; null if none could be worked out. */
   calories: number | null;
   calorieConfidence: CalorieConfidence | null;
@@ -91,8 +99,13 @@ export function normalizeVideoUrl(url: string): string {
 
 export type RecipeSummary = {
   id: string;
+  /** For links: /recipes/<title-slug>-<shortId>. */
+  shortId: string;
   title: string | null;
+  description: string | null;
   category: string | null;
+  /** null until it's been worked out after saving. */
+  calories: number | null;
   sourceUrl: string | null;
   needsReview: boolean;
   createdAt: string;
@@ -114,6 +127,7 @@ export type AskRequest = { question: string };
 
 export type AskRecipe = {
   id: string;
+  shortId: string;
   title: string | null;
   category: string | null;
   similarity: number;
@@ -154,3 +168,15 @@ export const LOCAL_SERVER_PATHS = {
   ask: "/ask",
   extractTikTok: "/extract-tiktok",
 } as const;
+
+const SHORT_ID_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
+export const SHORT_ID_LENGTH = 6;
+
+/**
+ * The short, URL-friendly recipe id ("x7kp2m") used in links like /recipes/shio-pan-x7kp2m.
+ * 36^6 ≈ 2 billion values; the unique constraint on recipes.short_id catches the odd clash.
+ */
+export function generateShortId(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(SHORT_ID_LENGTH));
+  return Array.from(bytes, (byte) => SHORT_ID_ALPHABET[byte % SHORT_ID_ALPHABET.length]).join("");
+}

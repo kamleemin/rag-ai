@@ -8,3 +8,9 @@ export const ADD_RECIPE_ERROR_MESSAGES: Partial<Record<ApiErrorCode, string>> = 
   EXTRACTION_FAILED: EXTRACTION_FAILED_MESSAGE,
   EXTRACTION_SERVICE_UNREACHABLE: EXTRACTION_FAILED_MESSAGE,
 };
+
+/** The two ways to add a recipe on the add-recipe page. */
+export enum AddRecipeTab {
+  Video = "video",
+  Manual = "manual",
+}

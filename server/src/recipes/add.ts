@@ -1,5 +1,6 @@
 import { eq, isNotNull } from "drizzle-orm";
 import {
+  generateShortId,
   normalizeVideoUrl,
   PendingVideoStatus,
   RECIPE_CATEGORIES,
@@ -21,8 +22,7 @@ const BLANK_RECIPE: ParsedRecipe = {
   title: null,
   description: null,
   servings: null,
-  prepMinutes: null,
-  cookMinutes: null,
+  totalMinutes: null,
   ingredients: [],
   instructions: null,
   category: null,
@@ -72,7 +72,7 @@ export async function addRecipe(rawUrl: string): Promise<AddRecipeResponse> {
 
     const [row] = await db
       .insert(recipes)
-      .values({ ...recipe, sourceUrl: url, needsReview: true, embedding })
+      .values({ ...recipe, shortId: generateShortId(), sourceUrl: url, needsReview: true, embedding })
       .onConflictDoNothing({ target: recipes.sourceUrl })
       .returning(recipeSummaryColumns);
 

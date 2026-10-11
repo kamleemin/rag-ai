@@ -1,4 +1,4 @@
-import type { ParsedIngredient } from "@rag-ai/shared";
+import type { ParsedIngredient } from "../index.js";
 import {
   DESCRIPTOR_WORDS,
   GENERIC_WORDS,
@@ -53,7 +53,9 @@ function score(food: UsdaFood, required: string[]): Ranked | null {
   const hasAllWords = required.every((word) => descriptionWords.includes(word));
   // Otherwise the food itself must lead the name: "Rice, white, long-grain" for "jasmine rice".
   const leadsWithHead = firstPart.includes(required[required.length - 1]);
-  if (!hasAllWords && !leadsWithHead) return null;
+  if (!hasAllWords && !leadsWithHead) {
+    return null;
+  }
 
   let points = hasAllWords ? 100 : 0;
   // USDA names lead with the food: "Egg, whole, raw" is an egg, "Bread, egg" is bread,

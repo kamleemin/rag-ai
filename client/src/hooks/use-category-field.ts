@@ -8,5 +8,11 @@ export function useCategoryField(initialCategory: string) {
     setIsAddingCategory((v) => !v);
   }
 
-  return { category, setCategory, isAddingCategory, toggleAddingCategory };
+  /** Back to the starting category, with the "new category" box closed. */
+  function resetCategory() {
+    setCategory(initialCategory);
+    setIsAddingCategory(false);
+  }
+
+  return { category, setCategory, isAddingCategory, toggleAddingCategory, resetCategory };
 }

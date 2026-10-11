@@ -1,5 +1,4 @@
 import * as z from "zod";
-import { env } from "../env.js";
 
 const USDA_API_URL = "https://api.nal.usda.gov/fdc/v1";
 // Basic foods only: SR Legacy (raw produce, meat, staples, spices) and Foundation
@@ -63,8 +62,8 @@ const foodDetailsSchema = z.array(
  * POST, not GET: the GET search randomly answers 400 from USDA's gateway
  * (the same URL fails about 1 in 3 times), while POST has been reliable.
  */
-async function usdaPost(path: string, body: object): Promise<unknown> {
-  const url = `${USDA_API_URL}${path}?api_key=${encodeURIComponent(env.USDA_API_KEY)}`;
+async function usdaPost(path: string, body: object, apiKey: string): Promise<unknown> {
+  const url = `${USDA_API_URL}${path}?api_key=${encodeURIComponent(apiKey)}`;
   let lastError: unknown;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
@@ -79,7 +78,9 @@ async function usdaPost(path: string, body: object): Promise<unknown> {
         throw new Error("USDA rate limit reached — set USDA_API_KEY to your own free key");
       }
       // Error pages come back as HTML, so only parse JSON from a successful response.
-      if (res.ok) return JSON.parse(await res.text());
+      if (res.ok) {
+        return JSON.parse(await res.text());
+      }
       lastError = new Error(`USDA ${path} failed: ${res.status}`);
     } catch (err) {
       if (err instanceof Error && err.message.startsWith("USDA rate limit")) throw err;
@@ -93,7 +94,9 @@ async function usdaPost(path: string, body: object): Promise<unknown> {
 /** Reuse results while the server runs — failures are dropped so the next call retries. */
 function cached<T>(cache: Map<string, Promise<T>>, key: string, load: () => Promise<T>) {
   const existing = cache.get(key);
-  if (existing) return existing;
+  if (existing) {
+    return existing;
+  }
   const result = load();
   result.catch(() => cache.delete(key));
   cache.set(key, result);
@@ -104,19 +107,21 @@ const searchCache = new Map<string, Promise<UsdaFood[]>>();
 const measuresCache = new Map<string, Promise<UsdaMeasure[]>>();
 
 /** Candidate foods for a query, in USDA's order — rank with rankFoods, not the first result. */
-export function searchUsdaFoods(query: string): Promise<UsdaFood[]> {
+export function searchUsdaFoods(query: string, apiKey: string): Promise<UsdaFood[]> {
   const key = query.trim().toLowerCase();
   return cached(searchCache, key, async () => {
-    const data = await usdaPost("/foods/search", {
-      query: key,
-      dataType: USDA_DATA_TYPES,
-      pageSize: CANDIDATES_PER_SEARCH,
-    });
+    const data = await usdaPost(
+      "/foods/search",
+      { query: key, dataType: USDA_DATA_TYPES, pageSize: CANDIDATES_PER_SEARCH },
+      apiKey
+    );
     return searchResponseSchema.parse(data).foods.flatMap((food) => {
       const kcal = food.foodNutrients.find(
         (n) => n.nutrientId === ENERGY_KCAL_NUTRIENT_ID
       )?.value;
-      if (kcal === undefined) return [];
+      if (kcal === undefined) {
+        return [];
+      }
       return [
         {
           fdcId: food.fdcId,
@@ -134,11 +139,13 @@ export function searchUsdaFoods(query: string): Promise<UsdaFood[]> {
 }
 
 /** Household measures for a food ("1 cup = 100 g") — SR Legacy and Foundation only return them from the details endpoint. */
-export function getUsdaMeasures(food: UsdaFood): Promise<UsdaMeasure[]> {
-  if (food.measures.length > 0) return Promise.resolve(food.measures);
+export function getUsdaMeasures(food: UsdaFood, apiKey: string): Promise<UsdaMeasure[]> {
+  if (food.measures.length > 0) {
+    return Promise.resolve(food.measures);
+  }
 
   return cached(measuresCache, String(food.fdcId), async () => {
-    const data = await usdaPost("/foods", { fdcIds: [food.fdcId], format: "full" });
+    const data = await usdaPost("/foods", { fdcIds: [food.fdcId], format: "full" }, apiKey);
     const [details] = foodDetailsSchema.parse(data);
     const measures = (details?.foodPortions ?? []).map((portion) => {
       // SR Legacy: amount=1, modifier="tbsp, ground". Foundation: measureUnit.name="cup".
