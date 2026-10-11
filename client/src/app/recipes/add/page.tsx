@@ -2,9 +2,9 @@
 
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/common/page-header";
+import SegmentedTabs from "@/components/common/segmented-tabs";
 import RecipeForm from "@/components/recipe/recipe-form";
-import { cn } from "@/lib/utils";
-import { AddRecipeTab } from "./const";
+import { ADD_RECIPE_TABS, AddRecipeTab } from "./const";
 import { useAddRecipeForm } from "./use-add-recipe-form";
 import GeneratingRecipe from "./generating-recipe";
 
@@ -37,28 +37,7 @@ export default function AddRecipePage() {
       <PageHeader backHref="/recipes" title="Add a Recipe" />
 
       <div className="mx-auto max-w-[720px] px-5 py-8 pb-20 sm:px-10">
-        <div className="mb-7 inline-flex overflow-hidden rounded-lg border border-border">
-          <button
-            type="button"
-            onClick={() => setTab(AddRecipeTab.Video)}
-            className={cn(
-              "px-5 py-2.5 font-mono text-[11px] font-semibold tracking-[0.06em]",
-              tab === AddRecipeTab.Video ? "bg-ink text-white" : "bg-white text-tan"
-            )}
-          >
-            FROM VIDEO
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab(AddRecipeTab.Manual)}
-            className={cn(
-              "border-l border-border px-5 py-2.5 font-mono text-[11px] font-semibold tracking-[0.06em]",
-              tab === AddRecipeTab.Manual ? "bg-ink text-white" : "bg-white text-tan"
-            )}
-          >
-            MANUAL ENTRY
-          </button>
-        </div>
+        <SegmentedTabs tabs={ADD_RECIPE_TABS} value={tab} onChange={setTab} className="mb-7" />
 
         {tab === AddRecipeTab.Video && (
           <div className="rounded-[10px] border border-border bg-white px-8 py-7">

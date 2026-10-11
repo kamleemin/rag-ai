@@ -14,3 +14,8 @@ export enum AddRecipeTab {
   Video = "video",
   Manual = "manual",
 }
+
+export const ADD_RECIPE_TABS = [
+  { value: AddRecipeTab.Video, label: "FROM VIDEO" },
+  { value: AddRecipeTab.Manual, label: "MANUAL ENTRY" },
+];

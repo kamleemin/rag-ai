@@ -2,16 +2,11 @@
 
 import Link from "next/link";
 import MonoBadge from "@/components/recipe/mono-badge";
-import { formatCalories } from "@/lib/format-recipe";
 import { PATHNAMES } from "@/lib/pathnames";
-import { recipePath } from "@/lib/recipe-path";
-import { useRecipesQuery } from "@/requests/list-recipes";
+import { useAllRecipes } from "./use-all-recipes";
 
 export default function AllRecipesPage() {
-  const { data, isLoading, error } = useRecipesQuery();
-
-  const recipes = data?.recipes ?? [];
-  const errorMessage = error ? error.message : null;
+  const { isLoading, errorMessage, items } = useAllRecipes();
 
   return (
     <main className="flex-1">
@@ -36,34 +31,51 @@ export default function AllRecipesPage() {
         )}
         {!isLoading && !errorMessage && (
           <div className="mb-2 font-mono text-[11px] tracking-[0.06em] text-tan">
-            {recipes.length} RECIPES
+            {items.length} RECIPES
           </div>
         )}
-        {recipes.map((recipe) => (
-          <Link
-            key={recipe.id}
-            href={recipePath(recipe)}
-            className="flex items-center justify-between gap-4 border-b border-[#EFEDE7] px-1 py-4.5"
-          >
-            <div className="min-w-0">
-              <div className="mb-1.5 font-serif text-base font-semibold text-ink">
-                {recipe.title ?? "Untitled recipe"}
+        {items.map(
+          ({
+            id,
+            href,
+            title,
+            description,
+            category,
+            caloriesLabel,
+            perServingLabel,
+          }) => (
+            <Link
+              key={id}
+              href={href}
+              className="flex items-center justify-between gap-4 border-b border-[#EFEDE7] px-1 py-4.5"
+            >
+              <div className="min-w-0">
+                <div className="mb-1.5 font-serif text-base font-semibold text-ink">
+                  {title}
+                </div>
+                {description && (
+                  <p className="mb-2 line-clamp-2 text-[13px] leading-relaxed text-body-text">
+                    {description}
+                  </p>
+                )}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {category && (
+                    <MonoBadge variant="green">{category}</MonoBadge>
+                  )}
+                  <span className="text-xs text-tan-tint-text">
+                    {caloriesLabel}
+                  </span>
+                  {perServingLabel && (
+                    <span className="text-xs text-tan-tint-text">
+                      · {perServingLabel}
+                    </span>
+                  )}
+                </div>
               </div>
-              {recipe.description && (
-                <p className="mb-2 line-clamp-2 text-[13px] leading-relaxed text-body-text">
-                  {recipe.description}
-                </p>
-              )}
-              <div className="flex items-center gap-2.5">
-                {recipe.category && <MonoBadge variant="green">{recipe.category}</MonoBadge>}
-                <span className="text-xs text-tan-tint-text">
-                  {formatCalories(recipe.calories)}
-                </span>
-              </div>
-            </div>
-            <span className="text-lg text-border">›</span>
-          </Link>
-        ))}
+              <span className="text-lg text-border">›</span>
+            </Link>
+          ),
+        )}
       </div>
     </main>
   );

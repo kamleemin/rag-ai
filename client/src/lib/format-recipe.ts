@@ -6,6 +6,11 @@ export function formatCalories(calories: number | null): string {
   return calories === null ? "—" : `≈ ${calories} kcal`;
 }
 
+/** 160 → "≈ 160 kcal per serving"; null (no calories or servings) → null, so the line is left out. */
+export function formatCaloriesPerServing(caloriesPerServing: number | null): string | null {
+  return caloriesPerServing === null ? null : `≈ ${caloriesPerServing} kcal per serving`;
+}
+
 /** The badge for a recipe's calories: EXACT, ESTIMATED, or NOT YET when there's no total. */
 export function toCalorieBadge({
   calories,

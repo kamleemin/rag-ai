@@ -1,5 +1,9 @@
 import * as z from "zod";
-import { SHORT_ID_LENGTH, type CalorieEstimate } from "@rag-ai/shared";
+import {
+  calculateCaloriesPerServing,
+  SHORT_ID_LENGTH,
+  type CalorieEstimate,
+} from "@rag-ai/shared";
 
 // zod schemas for the recipe route handlers' request bodies and params.
 
@@ -44,6 +48,7 @@ type RecipeFields = z.infer<typeof recipeFieldsSchema>;
 /**
  * The recipes table columns for the edited fields. Blank text becomes null, blank
  * ingredient rows are dropped, and no calorie estimate clears the saved calories.
+ * Calories per serving is worked out here, so it always matches calories and servings.
  */
 export function toRecipeColumns({
   title,
@@ -54,6 +59,7 @@ export function toRecipeColumns({
   category,
   calorieEstimate,
 }: RecipeFields) {
+  const calories = calorieEstimate?.calories ?? null;
   return {
     title,
     description: description || null,
@@ -62,7 +68,8 @@ export function toRecipeColumns({
     ingredients: ingredients.filter((ingredient) => ingredient.name),
     instructions: instructions || null,
     category,
-    calories: calorieEstimate?.calories ?? null,
+    calories,
+    caloriesPerServing: calculateCaloriesPerServing(calories, servings || null),
     calorieConfidence: calorieEstimate?.calorieConfidence ?? null,
     calorieBreakdown: calorieEstimate?.calorieBreakdown ?? [],
   };

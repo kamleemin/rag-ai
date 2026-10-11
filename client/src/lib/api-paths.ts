@@ -9,6 +9,11 @@ export const API_PATHS = {
   updateRecipe: (shortId: string) => `/api/update-recipe/${shortId}`,
   calculateCalories: "/api/calculate-calories",
   pendingVideos: "/api/pending-videos",
+  ingredients: "/api/ingredients",
+  addIngredient: "/api/add-ingredient",
+  updateIngredient: (id: string) => `/api/update-ingredient/${id}`,
+  deleteIngredient: (id: string) => `/api/delete-ingredient/${id}`,
+  openFoodFacts: (query: string) => `/api/open-food-facts?${new URLSearchParams({ query })}`,
   addPendingVideo: "/api/add-pending-video",
   deletePendingVideo: (id: string) => `/api/delete-pending-video/${id}`,
 } as const;

@@ -43,6 +43,7 @@ export function useRecipeForm(
     savedEstimate,
   } = useCalorieEstimate(
     toParsedIngredients(rows),
+    servings,
     initialValues.calorieEstimate ?? null,
     toParsedIngredients(initialRows)
   );

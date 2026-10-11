@@ -1,6 +1,15 @@
 import { useState } from "react";
-import type { CalorieEstimate, ParsedIngredient } from "@rag-ai/shared";
-import { formatCalories, toCalorieBadge, toCalorieNote } from "@/lib/format-recipe";
+import {
+  calculateCaloriesPerServing,
+  type CalorieEstimate,
+  type ParsedIngredient,
+} from "@rag-ai/shared";
+import {
+  formatCalories,
+  formatCaloriesPerServing,
+  toCalorieBadge,
+  toCalorieNote,
+} from "@/lib/format-recipe";
 import { ingredientsKey } from "@/lib/recipe-form-values";
 import { toUserMessage } from "@/lib/user-error-messages";
 import { useCalculateCaloriesMutation } from "@/requests/calculate-calories";
@@ -13,6 +22,8 @@ import { CALORIE_REVIEW_REASON_LABELS } from "./const";
  */
 export function useCalorieEstimate(
   ingredients: ParsedIngredient[],
+  /** The form's servings as typed — per serving follows it as you edit. */
+  servings: string,
   initialEstimate: CalorieEstimate | null,
   initialIngredients: ParsedIngredient[]
 ) {
@@ -47,6 +58,9 @@ export function useCalorieEstimate(
   return {
     calorieDisplay: estimate && {
       caloriesLabel: formatCalories(estimate.calories),
+      perServingLabel: formatCaloriesPerServing(
+        calculateCaloriesPerServing(estimate.calories, servings)
+      ),
       badge: toCalorieBadge(estimate),
       note: toCalorieNote(estimate),
       lines: estimate.calorieBreakdown.map((line) => ({

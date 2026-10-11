@@ -1,5 +1,6 @@
 import { eq, isNotNull } from "drizzle-orm";
 import {
+  calculateCaloriesPerServing,
   generateShortId,
   normalizeVideoUrl,
   PendingVideoStatus,
@@ -72,7 +73,14 @@ export async function addRecipe(rawUrl: string): Promise<AddRecipeResponse> {
 
     const [row] = await db
       .insert(recipes)
-      .values({ ...recipe, shortId: generateShortId(), sourceUrl: url, needsReview: true, embedding })
+      .values({
+        ...recipe,
+        caloriesPerServing: calculateCaloriesPerServing(recipe.calories, recipe.servings),
+        shortId: generateShortId(),
+        sourceUrl: url,
+        needsReview: true,
+        embedding,
+      })
       .onConflictDoNothing({ target: recipes.sourceUrl })
       .returning(recipeSummaryColumns);
 

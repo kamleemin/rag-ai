@@ -1,5 +1,5 @@
 import type { PendingVideo, RecipeSummary } from "../index.js";
-import { pendingVideos, recipes } from "./schema.js";
+import { ingredients, pendingVideos, recipes } from "./schema.js";
 
 export * from "./schema.js";
 
@@ -11,6 +11,7 @@ export const recipeSummaryColumns = {
   description: recipes.description,
   category: recipes.category,
   calories: recipes.calories,
+  caloriesPerServing: recipes.caloriesPerServing,
   sourceUrl: recipes.sourceUrl,
   needsReview: recipes.needsReview,
   createdAt: recipes.createdAt,
@@ -41,6 +42,7 @@ export const recipeColumns = {
   instructions: recipes.instructions,
   category: recipes.category,
   calories: recipes.calories,
+  caloriesPerServing: recipes.caloriesPerServing,
   calorieConfidence: recipes.calorieConfidence,
   calorieBreakdown: recipes.calorieBreakdown,
   totalMinutes: recipes.totalMinutes,
@@ -54,5 +56,14 @@ export function toRecipe(row: Omit<typeof recipes.$inferSelect, "embedding">): R
 }
 
 export function toPendingVideo(row: typeof pendingVideos.$inferSelect): PendingVideo {
+  return { ...row, createdAt: row.createdAt.toISOString() };
+}
+
+/** One entry in your ingredient list as the API returns it (createdAt as an ISO string). */
+export type Ingredient = Omit<typeof ingredients.$inferSelect, "createdAt"> & {
+  createdAt: string;
+};
+
+export function toIngredient(row: typeof ingredients.$inferSelect): Ingredient {
   return { ...row, createdAt: row.createdAt.toISOString() };
 }

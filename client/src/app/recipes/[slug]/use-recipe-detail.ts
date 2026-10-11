@@ -5,6 +5,7 @@ import type { Recipe } from "@rag-ai/shared/db";
 import { ApiRequestError } from "@/lib/api-request-error";
 import {
   formatCalories,
+  formatCaloriesPerServing,
   formatIngredient,
   toCalorieBadge,
   toCalorieNote,
@@ -102,6 +103,7 @@ export function useRecipeDetail(slug: string) {
     ingredientLines: recipe.ingredients.map(formatIngredient),
     steps: toSteps(recipe.instructions),
     caloriesLabel: formatCalories(recipe.calories),
+    caloriesPerServing: formatCaloriesPerServing(recipe.caloriesPerServing),
     calorieBadge: toCalorieBadge(recipe),
     calorieNote: toCalorieDescription(recipe),
     startEditing,

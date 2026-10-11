@@ -85,6 +85,29 @@ export const RECIPE_CATEGORIES = [
   "Salad",
 ];
 
+// "4", "serves 4", "2-3", "2 to 3 people" → the first number, and the second if it's a range.
+const SERVINGS_PATTERN = /(\d+(?:\.\d+)?)(?:\s*(?:-|–|to)\s*(\d+(?:\.\d+)?))?/;
+
+/** "4" → 4; "2-3" → 2.5 (a range counts as its midpoint); no usable number → null. */
+export function parseServings(servings: string | null): number | null {
+  const match = servings?.match(SERVINGS_PATTERN);
+  if (!match) {
+    return null;
+  }
+  const fewest = Number(match[1]);
+  const most = match[2] ? Number(match[2]) : fewest;
+  if (fewest <= 0 || most < fewest) {
+    return null;
+  }
+  return (fewest + most) / 2;
+}
+
+/** 640 kcal, "4" → 160; "2-3" → 256. Saved with the recipe and shown live in the form. */
+export function calculateCaloriesPerServing(calories: number | null, servings: string | null): number | null {
+  const count = parseServings(servings);
+  return calories === null || count === null ? null : Math.round(calories / count);
+}
+
 /**
  * TikTok share links carry tracking query params (?is_from_webapp=1&sender_device=pc…)
  * that differ per share, so dedupe on the URL without query/hash/trailing slash.
@@ -104,8 +127,10 @@ export type RecipeSummary = {
   title: string | null;
   description: string | null;
   category: string | null;
-  /** null until it's been worked out after saving. */
+  /** null until "Calculate calories" has been used and the recipe saved. */
   calories: number | null;
+  /** calories ÷ servings; null without calories or a number in servings. */
+  caloriesPerServing: number | null;
   sourceUrl: string | null;
   needsReview: boolean;
   createdAt: string;
@@ -136,6 +161,12 @@ export type AskRecipe = {
 export type AskResponse = { answer: string; recipes: AskRecipe[] };
 
 // ---- Cloud (Next.js route handlers) ----
+
+/** Where an entry in your ingredient list came from. */
+export enum IngredientSource {
+  Manual = "manual",
+  OpenFoodFacts = "open_food_facts",
+}
 
 /** A saved link's state in the `pending_videos` table. */
 export enum PendingVideoStatus {

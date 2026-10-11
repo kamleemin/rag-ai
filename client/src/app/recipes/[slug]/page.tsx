@@ -43,6 +43,7 @@ export default function RecipeDetailPage({
     ingredientLines,
     steps,
     caloriesLabel,
+    caloriesPerServing,
     calorieBadge,
     calorieNote,
     startEditing,
@@ -104,6 +105,7 @@ export default function RecipeDetailPage({
                 calories={caloriesLabel}
                 badgeLabel={calorieBadge.label}
                 badgeVariant={calorieBadge.variant}
+                perServing={caloriesPerServing}
                 right={
                   <span className="text-xs text-tan-tint-text">
                     {calorieNote}

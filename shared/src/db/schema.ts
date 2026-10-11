@@ -15,7 +15,7 @@ import type {
   CalorieLine,
   ParsedIngredient,
 } from "../index.js";
-import { PendingVideoStatus } from "../index.js";
+import { IngredientSource, PendingVideoStatus } from "../index.js";
 
 /** nomic-embed-text output size. Changing the embedding model means re-embedding every recipe. */
 export const EMBEDDING_DIMENSIONS = 768;
@@ -36,6 +36,8 @@ export const recipes = snakeCase.table("recipes", {
   instructions: text(),
   category: text(),
   calories: integer(),
+  // calories ÷ servings, saved alongside them; a servings range ("2-3") uses its midpoint.
+  caloriesPerServing: integer(),
   calorieConfidence: text().$type<CalorieConfidence>(),
   calorieBreakdown: jsonb().$type<CalorieLine[]>().notNull().default([]),
   // Null for manually entered recipes; unique so the same video is never saved twice.
@@ -55,11 +57,22 @@ export const pendingVideos = snakeCase.table("pending_videos", {
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });
 
+export const ingredientSource = pgEnum("ingredient_source", IngredientSource);
+
 /** Your own ingredient list — checked before USDA when working out calories. */
 export const ingredients = snakeCase.table("ingredients", {
   id: uuid().primaryKey().defaultRandom(),
   name: text().notNull(),
   brand: text(),
   kcalPer100g: real().notNull(),
+  // Optional — not every label lists them. Grams per 100 g.
+  fatPer100g: real(),
+  // US labels count fibre inside carbs; EU/UK labels don't. Stored as the label gives it.
+  carbsPer100g: real(),
+  fibrePer100g: real(),
+  proteinPer100g: real(),
+  source: ingredientSource().notNull().default(IngredientSource.Manual),
+  // The product's barcode when imported from Open Food Facts, to link back to it.
+  openFoodFactsCode: text(),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });

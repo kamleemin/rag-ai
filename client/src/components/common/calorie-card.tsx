@@ -6,6 +6,7 @@ export default function CalorieCard({
   calories,
   badgeLabel,
   badgeVariant = "tan",
+  perServing,
   note,
   right,
 }: {
@@ -13,6 +14,8 @@ export default function CalorieCard({
   calories: string;
   badgeLabel: string;
   badgeVariant?: "tan" | "green";
+  /** e.g. "≈ 160 kcal per serving", under the total. */
+  perServing?: string | null;
   note?: string;
   right?: ReactNode;
 }) {
@@ -30,6 +33,7 @@ export default function CalorieCard({
           </span>
           <MonoBadge variant={badgeVariant}>{badgeLabel}</MonoBadge>
         </div>
+        {perServing && <div className="mt-1 text-[13px] text-ink">{perServing}</div>}
         {note && <div className="mt-1.5 text-xs text-body-text">{note}</div>}
       </div>
       {right}

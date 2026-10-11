@@ -44,6 +44,7 @@ export default function CalorieSection({
               calories={calorieDisplay.caloriesLabel}
               badgeLabel={calorieDisplay.badge.label}
               badgeVariant={calorieDisplay.badge.variant}
+              perServing={calorieDisplay.perServingLabel}
               note={calorieDisplay.note}
               right={calculateButton}
             />

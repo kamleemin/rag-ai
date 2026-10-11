@@ -1,5 +1,11 @@
 import type { UseMutationOptions, UseQueryOptions } from "@tanstack/react-query";
-import type { CalorieEstimate, ExtractTikTokResponse, ParsedIngredient } from "@rag-ai/shared";
+import type {
+  CalorieEstimate,
+  ExtractTikTokResponse,
+  IngredientSource,
+  ParsedIngredient,
+} from "@rag-ai/shared";
+import type { Ingredient } from "@rag-ai/shared/db";
 
 export type EditableRow = { id: string; [key: string]: string };
 
@@ -13,13 +19,19 @@ export type Column = {
 export type ApiErrorCode =
   | "INVALID_JSON"
   | "INVALID_BODY"
+  /** A query-string parameter is missing or invalid. */
+  | "INVALID_QUERY"
   | "INVALID_ID"
   | "UNAUTHORIZED"
   | "WRONG_PASSWORD"
   | "NOT_FOUND"
   | "EXTRACTION_FAILED"
   | "EXTRACTION_SERVICE_UNREACHABLE"
-  | "ALREADY_SAVED";
+  | "ALREADY_SAVED"
+  /** Another ingredient in your list already has this name. */
+  | "INGREDIENT_EXISTS"
+  | "OPEN_FOOD_FACTS_RATE_LIMITED"
+  | "OPEN_FOOD_FACTS_FAILED";
 
 /** Every API error response. `error` is technical and may change — never show it to users. */
 export type ApiErrorResponse = { code: ApiErrorCode; error: string };
@@ -83,3 +95,47 @@ export type SaveRecipeRequest = UpdateRecipeRequest & {
 
 /** What the add-recipe page hands to the review screen: the extraction and the link it came from. */
 export type ExtractedRecipe = ExtractTikTokResponse & { sourceUrl: string };
+
+export type ListIngredientsResponse = { ingredients: Ingredient[] };
+
+/** Body of POST /api/add-ingredient and POST /api/update-ingredient/[id]. Nutrients are per 100 g. */
+export type IngredientRequest = {
+  name: string;
+  brand: string | null;
+  kcalPer100g: number;
+  fatPer100g: number | null;
+  carbsPer100g: number | null;
+  fibrePer100g: number | null;
+  proteinPer100g: number | null;
+  source: IngredientSource;
+  openFoodFactsCode: string | null;
+};
+
+/** One Open Food Facts search result, trimmed to what the ingredient list uses. Per 100 g. */
+export type OpenFoodFactsProduct = {
+  code: string;
+  name: string;
+  brand: string | null;
+  /** Pack size as printed, e.g. "1.5 kg". */
+  quantity: string | null;
+  kcalPer100g: number;
+  fatPer100g: number | null;
+  carbsPer100g: number | null;
+  fibrePer100g: number | null;
+  proteinPer100g: number | null;
+};
+
+export type SearchOpenFoodFactsResponse = { products: OpenFoodFactsProduct[] };
+
+/** The ingredient form's fields, as typed (numbers stay text until saving). */
+export type IngredientFormValues = {
+  name: string;
+  brand: string;
+  kcalPer100g: string;
+  fatPer100g: string;
+  carbsPer100g: string;
+  fibrePer100g: string;
+  proteinPer100g: string;
+  source: IngredientSource;
+  openFoodFactsCode: string | null;
+};
