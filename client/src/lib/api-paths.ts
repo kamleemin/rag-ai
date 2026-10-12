@@ -2,7 +2,6 @@
 export const API_PATHS = {
   login: "/api/login",
   logout: "/api/logout",
-  extractTikTok: "/api/extract-tiktok",
   recipes: "/api/recipes",
   recipeByShortId: (shortId: string) => `/api/recipes/${shortId}`,
   saveRecipe: "/api/save-recipe",

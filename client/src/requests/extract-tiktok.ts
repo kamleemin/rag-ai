@@ -1,17 +1,16 @@
 import { useMutation } from "@tanstack/react-query";
-import type { ExtractTikTokResponse } from "@rag-ai/shared";
-import { API_PATHS } from "@/lib/api-paths";
-import { handleApiError } from "@/lib/api-request-error";
+import {
+  LOCAL_SERVER_PATHS,
+  type ExtractTikTokRequest,
+  type ExtractTikTokResponse,
+} from "@rag-ai/shared";
+import { postToRecipeServer } from "@/lib/recipe-server";
 import type { RequestMutationOptions } from "@/types";
 
-export async function extractTikTok(url: string): Promise<ExtractTikTokResponse> {
-  const res = await fetch(API_PATHS.extractTikTok, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url }),
-  });
-  await handleApiError(res);
-  return res.json();
+/** Reads a TikTok video's recipe on the recipe server on this PC (yt-dlp + llama3). Saves nothing. */
+export function extractTikTok(url: string): Promise<ExtractTikTokResponse> {
+  const body: ExtractTikTokRequest = { url };
+  return postToRecipeServer<ExtractTikTokResponse>(LOCAL_SERVER_PATHS.extractTikTok, body);
 }
 
 export function useExtractTikTokMutation(

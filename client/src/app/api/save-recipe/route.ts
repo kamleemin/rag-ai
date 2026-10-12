@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import * as z from "zod";
 import { generateShortId, normalizeVideoUrl, type RecipeSummary } from "@rag-ai/shared";
-import { recipes } from "@rag-ai/shared/db";
+import { eq } from "drizzle-orm";
+import { pendingVideos, recipes } from "@rag-ai/shared/db";
 import { db } from "@/db/db";
 import { apiError } from "@/lib/api-error";
 import { parseJsonBody } from "@/lib/parse-json-body";
@@ -47,6 +48,11 @@ export async function POST(request: Request) {
     .returning({ id: recipes.id });
   if (!row) {
     return apiError("ALREADY_SAVED", `A recipe from ${normalizedUrl} is already saved`);
+  }
+
+  // The link was waiting in your queue (saved from the phone) — it's done now.
+  if (normalizedUrl) {
+    await db.delete(pendingVideos).where(eq(pendingVideos.url, normalizedUrl));
   }
 
   // Read back with the category name joined in (an insert can't return it).

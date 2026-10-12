@@ -5,13 +5,14 @@ import { toUserMessage } from "@/lib/user-error-messages";
 import { useLogInMutation } from "@/requests/login";
 import { LOGIN_ERROR_MESSAGES } from "./const";
 
-export function useLoginForm() {
+/** `next`: the page to return to after logging in (already checked to be inside the app). */
+export function useLoginForm(next: string | null) {
   const [password, setPassword] = useState("");
   const router = useRouter();
 
   const { mutate, isPending, error } = useLogInMutation({
     onSuccess: () => {
-      router.replace(PATHNAMES.homepage);
+      router.replace(next ?? PATHNAMES.homepage);
       router.refresh();
     },
   });

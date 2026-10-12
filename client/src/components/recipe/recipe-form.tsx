@@ -165,7 +165,7 @@ export default function RecipeForm({
             ))}
           </SelectContent>
         </Select>
-        {detected && <MonoBadge variant="green">AUTO-SUGGESTED</MonoBadge>}
+        {detected && categoryId && <MonoBadge variant="green">AUTO-SUGGESTED</MonoBadge>}
       </div>
       {isAddingCategory && (
         <div className="mb-3">

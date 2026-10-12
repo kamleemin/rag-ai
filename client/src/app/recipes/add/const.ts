@@ -1,12 +1,17 @@
 import type { ApiErrorCode } from "@/types";
 
-const EXTRACTION_FAILED_MESSAGE = "Couldn't get the recipe from that video. Please try again.";
+export const INVALID_LINK_MESSAGE =
+  "That doesn't look like a video link. Please check it and try again.";
 
-// What the add-recipe page says for each API error; anything else gets the generic message.
+// What the add-recipe page says when Generate fails; anything else gets the generic message.
 export const ADD_RECIPE_ERROR_MESSAGES: Partial<Record<ApiErrorCode, string>> = {
-  INVALID_BODY: "That doesn't look like a video link. Please check it and try again.",
-  EXTRACTION_FAILED: EXTRACTION_FAILED_MESSAGE,
-  EXTRACTION_SERVICE_UNREACHABLE: EXTRACTION_FAILED_MESSAGE,
+  RECIPE_SERVER_UNREACHABLE:
+    "Couldn't reach the recipe server on your PC. Start it and try again, or save the link for later.",
+};
+
+// What "Save for later" says when adding the link to the queue fails.
+export const SAVE_FOR_LATER_ERROR_MESSAGES: Partial<Record<ApiErrorCode, string>> = {
+  INVALID_BODY: INVALID_LINK_MESSAGE,
 };
 
 /** The two ways to add a recipe on the add-recipe page. */
