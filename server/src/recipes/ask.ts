@@ -1,6 +1,6 @@
 import { cosineDistance, desc, gt, sql } from "drizzle-orm";
 import type { AskResponse } from "@rag-ai/shared";
-import { recipes } from "@rag-ai/shared/db";
+import { categories, recipeCategoryJoin, recipes } from "@rag-ai/shared/db";
 import { db } from "../db/index.js";
 import { env } from "../env.js";
 import { chat, embed } from "../ollama/index.js";
@@ -13,8 +13,11 @@ const NO_MATCH_ANSWER =
 
 type MatchedRecipe = Pick<
   typeof recipes.$inferSelect,
-  "title" | "category" | "ingredients" | "instructions" | "calories" | "totalMinutes"
->;
+  "title" | "ingredients" | "instructions" | "calories" | "totalMinutes"
+> & {
+  /** The category's name (recipes store its id). */
+  category: string | null;
+};
 
 function formatRecipeForPrompt(recipe: MatchedRecipe): string {
   const ingredients = recipe.ingredients
@@ -43,7 +46,7 @@ export async function askRecipes(question: string): Promise<AskResponse> {
       id: recipes.id,
       shortId: recipes.shortId,
       title: recipes.title,
-      category: recipes.category,
+      category: categories.name,
       ingredients: recipes.ingredients,
       instructions: recipes.instructions,
       calories: recipes.calories,
@@ -51,6 +54,7 @@ export async function askRecipes(question: string): Promise<AskResponse> {
       similarity,
     })
     .from(recipes)
+    .leftJoin(categories, recipeCategoryJoin)
     .where(gt(similarity, env.ASK_MIN_SIMILARITY))
     .orderBy(desc(similarity))
     .limit(TOP_K);

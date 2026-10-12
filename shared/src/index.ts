@@ -17,7 +17,8 @@ export type ParsedRecipe = {
   totalMinutes: number | null;
   ingredients: ParsedIngredient[];
   instructions: string | null;
-  category: string | null;
+  /** One of your categories (the model can only pick existing ones); null if none fit. */
+  categoryId: string | null;
   /** Sum of the known per-ingredient kcal; null if none could be worked out. */
   calories: number | null;
   calorieConfidence: CalorieConfidence | null;
@@ -41,6 +42,8 @@ export type CalorieConfidence = "exact" | "estimated";
 /** How one ingredient's calories were worked out — shown on the review screen. */
 export type CalorieLine = {
   ingredient: string;
+  /** Just the ingredient's name ("whole chicken"), to search for a better match. Missing on older saves. */
+  name?: string;
   /** Where the kcal/100g came from; null when no food matched. */
   source: "personal" | "usda" | null;
   /** The matched food, e.g. "Cheese, Parmesan, dry grated". */
@@ -75,15 +78,6 @@ export type ExtractTikTokResponse = {
   extraction: ExtractionResult;
   recipe: ParsedRecipe | null;
 };
-
-export const RECIPE_CATEGORIES = [
-  "Pasta",
-  "Breakfast",
-  "Appetizer",
-  "Asian",
-  "Dessert",
-  "Salad",
-];
 
 // "4", "serves 4", "2-3", "2 to 3 people" → the first number, and the second if it's a range.
 const SERVINGS_PATTERN = /(\d+(?:\.\d+)?)(?:\s*(?:-|–|to)\s*(\d+(?:\.\d+)?))?/;
@@ -166,6 +160,8 @@ export type AskResponse = { answer: string; recipes: AskRecipe[] };
 export enum IngredientSource {
   Manual = "manual",
   OpenFoodFacts = "open_food_facts",
+  /** Picked from USDA's foods to fix a wrong match ("Change" in the calorie breakdown). */
+  Usda = "usda",
 }
 
 /** A saved link's state in the `pending_videos` table. */

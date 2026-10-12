@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
 import { SHORT_ID_LENGTH } from "@rag-ai/shared";
-import { recipeColumns, recipes, toRecipe, type Recipe } from "@rag-ai/shared/db";
-import { db } from "@/db/db";
+import type { Recipe } from "@rag-ai/shared/db";
 import { apiError } from "@/lib/api-error";
+import { findRecipeByShortId } from "@/lib/recipe-queries";
 import { shortIdSchema } from "@/lib/recipe-request-schemas";
 import { rejectWithoutSession } from "@/lib/session";
 
@@ -23,14 +22,10 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/recipes/[sh
     );
   }
 
-  const [row] = await db
-    .select(recipeColumns)
-    .from(recipes)
-    .where(eq(recipes.shortId, parsedShortId.data))
-    .limit(1);
-  if (!row) {
+  const recipe = await findRecipeByShortId(parsedShortId.data);
+  if (!recipe) {
     return apiError("NOT_FOUND", `No recipe with short id ${parsedShortId.data}`);
   }
 
-  return NextResponse.json<Recipe>(toRecipe(row));
+  return NextResponse.json<Recipe>(recipe);
 }

@@ -8,7 +8,7 @@ type RecipeFormSource = {
   servings: string | null;
   ingredients: ParsedIngredient[];
   instructions: string | null;
-  category: string | null;
+  categoryId: string | null;
 };
 
 /** A recipe → RecipeForm's starting values. */
@@ -22,7 +22,7 @@ export function toRecipeFormValues(
     servings: recipe.servings ?? "",
     ingredients: recipe.ingredients.map((ingredient, i) => ({ id: String(i + 1), ...ingredient })),
     instructions: recipe.instructions ?? "",
-    ...(recipe.category ? { category: recipe.category } : {}),
+    categoryId: recipe.categoryId ?? "",
     calorieEstimate,
   };
 }

@@ -1,4 +1,5 @@
 import type { CalorieReviewReason } from "@rag-ai/shared";
+import type { ApiErrorCode } from "@/types";
 
 // RecipeForm placeholders: "detected" when the values came from a video (blank means the
 // video didn't say), "manual" when the user is typing a recipe in.
@@ -28,3 +29,11 @@ export const CALORIE_REVIEW_REASON_LABELS: Record<CalorieReviewReason, string> =
   unknown_unit: "This unit can't be converted to grams",
   lookup_failed: "Couldn't reach USDA — calculate again",
 };
+
+// What the "Change" / "Find it" panel says when the USDA search fails.
+export const USDA_SEARCH_ERROR_MESSAGES: Partial<Record<ApiErrorCode, string>> = {
+  INVALID_QUERY: "Type at least 2 letters to search.",
+  USDA_SEARCH_FAILED: "Couldn't search USDA right now. Please try again.",
+};
+
+export const MIN_USDA_SEARCH_LENGTH = 2;

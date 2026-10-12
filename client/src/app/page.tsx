@@ -25,7 +25,7 @@ export default function Home() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleInputKeyDown}
-          placeholder="I have chicken and spinach, what can I make?"
+          placeholder="What can I make?"
           className="h-auto rounded-lg border-border bg-muted px-4.5 py-3.5 text-sm text-ink placeholder:text-tan"
         />
         <Button

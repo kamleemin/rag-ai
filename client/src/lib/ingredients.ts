@@ -1,6 +1,6 @@
 import { IngredientSource } from "@rag-ai/shared";
 import type { Ingredient } from "@rag-ai/shared/db";
-import type { IngredientFormValues, OpenFoodFactsProduct } from "@/types";
+import type { IngredientFormValues, OpenFoodFactsProduct, UsdaFoodResult } from "@/types";
 
 type Nutrients = Pick<
   Ingredient,
@@ -42,6 +42,8 @@ export function ingredientToFormValues(ingredient: Ingredient): IngredientFormVa
     proteinPer100g: toText(ingredient.proteinPer100g),
     source: ingredient.source,
     openFoodFactsCode: ingredient.openFoodFactsCode,
+    usdaFdcId: ingredient.usdaFdcId,
+    sourceName: ingredient.sourceName,
   };
 }
 
@@ -60,10 +62,40 @@ export function productToFormValues(product: OpenFoodFactsProduct): IngredientFo
     proteinPer100g: toText(product.proteinPer100g),
     source: IngredientSource.OpenFoodFacts,
     openFoodFactsCode: product.code,
+    usdaFdcId: null,
+    sourceName: product.name,
+  };
+}
+
+/**
+ * A USDA food picked for a recipe ingredient → the form. Named after the ingredient as the
+ * recipe writes it ("whole chicken"), so recipes match it from now on.
+ */
+export function usdaFoodToFormValues(
+  food: UsdaFoodResult,
+  ingredientName: string
+): IngredientFormValues {
+  return {
+    name: ingredientName.trim(),
+    brand: "",
+    kcalPer100g: toText(food.kcalPer100g),
+    fatPer100g: toText(food.fatPer100g),
+    carbsPer100g: toText(food.carbsPer100g),
+    fibrePer100g: toText(food.fibrePer100g),
+    proteinPer100g: toText(food.proteinPer100g),
+    source: IngredientSource.Usda,
+    openFoodFactsCode: null,
+    usdaFdcId: food.fdcId,
+    sourceName: food.name,
   };
 }
 
 /** The product's page on Open Food Facts. */
 export function openFoodFactsProductUrl(code: string): string {
   return `https://world.openfoodfacts.org/product/${code}`;
+}
+
+/** The food's page on USDA FoodData Central. */
+export function usdaFoodUrl(fdcId: number): string {
+  return `https://fdc.nal.usda.gov/food-details/${fdcId}/nutrients`;
 }

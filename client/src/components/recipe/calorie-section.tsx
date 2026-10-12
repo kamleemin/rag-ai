@@ -1,6 +1,7 @@
 import SectionHeader from "@/components/recipe/section-header";
 import CalorieCard from "@/components/common/calorie-card";
 import { cn } from "@/lib/utils";
+import CalorieFixPanel from "./calorie-fix-panel";
 import type { useCalorieEstimate } from "./use-calorie-estimate";
 
 type CalorieDisplay = NonNullable<ReturnType<typeof useCalorieEstimate>["calorieDisplay"]>;
@@ -14,6 +15,10 @@ export default function CalorieSection({
   isCalculating,
   errorMessage,
   onCalculate,
+  fixingLineIndex,
+  onStartFix,
+  onCloseFix,
+  onFixSaved,
 }: {
   step: string;
   calorieDisplay: CalorieDisplay | null;
@@ -22,6 +27,11 @@ export default function CalorieSection({
   isCalculating: boolean;
   errorMessage: string | null;
   onCalculate: () => void;
+  /** The line whose "Change" / "Find it" panel is open. */
+  fixingLineIndex: number | null;
+  onStartFix: (index: number) => void;
+  onCloseFix: () => void;
+  onFixSaved: () => void;
 }) {
   const calculateButton = (
     <button
@@ -57,21 +67,43 @@ export default function CalorieSection({
           )}
           <ul className={cn("mt-3 space-y-2", isOutdated && "opacity-60")}>
             {calorieDisplay.lines.map((line, i) => (
-              <li key={i} className="flex items-start justify-between gap-4 text-[13px]">
-                <div>
-                  <div className="text-ink">{line.ingredient}</div>
-                  {line.detail && (
-                    <div
-                      className={cn(
-                        "text-xs",
-                        line.needsValue ? "text-tan" : "text-tan-tint-text"
-                      )}
-                    >
-                      {line.detail}
-                    </div>
-                  )}
+              <li key={i} className="text-[13px]">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-ink">{line.ingredient}</div>
+                    {line.detail && (
+                      <div
+                        className={cn(
+                          "text-xs",
+                          line.needsValue ? "text-tan" : "text-tan-tint-text"
+                        )}
+                      >
+                        {line.detail}
+                        {line.fixLabel && fixingLineIndex !== i && (
+                          <>
+                            {" · "}
+                            <button
+                              type="button"
+                              onClick={() => onStartFix(i)}
+                              disabled={isCalculating}
+                              className="text-green underline disabled:opacity-60"
+                            >
+                              {line.fixLabel}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <span className="shrink-0 font-mono text-xs text-ink">{line.kcalLabel}</span>
                 </div>
-                <span className="shrink-0 font-mono text-xs text-ink">{line.kcalLabel}</span>
+                {fixingLineIndex === i && (
+                  <CalorieFixPanel
+                    ingredientName={line.name}
+                    onSaved={onFixSaved}
+                    onClose={onCloseFix}
+                  />
+                )}
               </li>
             ))}
           </ul>

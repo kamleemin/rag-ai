@@ -23,26 +23,8 @@ export const EMPTY_INGREDIENT_FORM: IngredientFormValues = {
   proteinPer100g: "",
   source: IngredientSource.Manual,
   openFoodFactsCode: null,
-};
-
-type NutrientKey = "kcalPer100g" | "fatPer100g" | "carbsPer100g" | "fibrePer100g" | "proteinPer100g";
-
-/** The form's number fields, in order. Only calories are required. */
-export const NUTRIENT_FIELDS: { key: NutrientKey; label: string; suffix: string }[] = [
-  { key: "kcalPer100g", label: "Calories *", suffix: "kcal/100g" },
-  { key: "fatPer100g", label: "Fat", suffix: "g/100g" },
-  { key: "carbsPer100g", label: "Carbs", suffix: "g/100g" },
-  { key: "fibrePer100g", label: "Fibre", suffix: "g/100g" },
-  { key: "proteinPer100g", label: "Protein", suffix: "g/100g" },
-];
-
-export const MISSING_FIELDS_MESSAGE = "Add a name and the calories per 100 g.";
-export const INVALID_NUMBER_MESSAGE = "Nutrition values must be numbers, e.g. 13.3.";
-
-export const SAVE_INGREDIENT_ERROR_MESSAGES: Partial<Record<ApiErrorCode, string>> = {
-  INVALID_BODY: MISSING_FIELDS_MESSAGE,
-  INGREDIENT_EXISTS: "You already have an ingredient with this name — edit that one instead.",
-  NOT_FOUND: "This ingredient no longer exists.",
+  usdaFdcId: null,
+  sourceName: null,
 };
 
 export const SEARCH_ERROR_MESSAGES: Partial<Record<ApiErrorCode, string>> = {
@@ -53,3 +35,10 @@ export const SEARCH_ERROR_MESSAGES: Partial<Record<ApiErrorCode, string>> = {
 };
 
 export const MIN_SEARCH_LENGTH = 2;
+
+// The badge on each entry in your list.
+export const INGREDIENT_SOURCE_LABELS: Record<IngredientSource, string> = {
+  [IngredientSource.Manual]: "MANUAL",
+  [IngredientSource.OpenFoodFacts]: "OPEN FOOD FACTS",
+  [IngredientSource.Usda]: "USDA",
+};

@@ -23,8 +23,25 @@ function describeIngredient(ingredient: ParsedIngredient): string {
   return [ingredient.amount, ingredient.unit, ingredient.name].filter(Boolean).join(" ");
 }
 
+/**
+ * USDA foods for a search you type ("whole chicken"), plain foods first by the same rules
+ * as automatic matching. Falls back to USDA's own order when the rules keep nothing.
+ */
+export async function searchUsdaIngredients(query: string, apiKey: string): Promise<UsdaFood[]> {
+  const required = requiredWords(query);
+  const candidates = await searchUsdaFoods(required.join(" "), apiKey);
+  const ranked = rankFoods(candidates, required);
+  return ranked.length > 0 ? ranked : candidates;
+}
+
+export type { UsdaFood };
+
+/** "sugar — Sugars, granulated": your name for it, its brand, and what it is at its source. */
 function personalLabel(personal: PersonalIngredient): string {
-  return [personal.name, personal.brand].filter(Boolean).join(" · ");
+  const label = [personal.name, personal.brand].filter(Boolean).join(" · ");
+  return personal.sourceName && personal.sourceName !== personal.name
+    ? `${label} — ${personal.sourceName}`
+    : label;
 }
 
 // When the best match has no measure for the unit (Foundation's "Garlic, raw" has no
@@ -66,6 +83,19 @@ async function lookUpUsda(
   }
 }
 
+/** The household measures of the USDA food a personal entry was picked from; null when USDA failed. */
+async function personalUsdaMeasures(
+  fdcId: number,
+  apiKey: string
+): Promise<{ food: null; measures: UsdaMeasure[] } | null> {
+  try {
+    return { food: null, measures: await getUsdaMeasures({ fdcId, measures: [] }, apiKey) };
+  } catch (err) {
+    console.error(`USDA measures failed for food ${fdcId}:`, err);
+    return null;
+  }
+}
+
 async function calorieLineFor(
   ingredient: ParsedIngredient,
   personal: PersonalIngredient | undefined,
@@ -76,6 +106,7 @@ async function calorieLineFor(
     usdaFood: UsdaFood | null = null
   ): CalorieLine => ({
     ingredient: describeIngredient(ingredient),
+    name: ingredient.name,
     source: personal ? "personal" : usdaFood ? "usda" : null,
     matchedFood: personal ? personalLabel(personal) : (usdaFood?.description ?? null),
     portion: null,
@@ -89,12 +120,15 @@ async function calorieLineFor(
     return needsReview("processed");
   }
 
-  // A personal entry with a weight ("200 g") needs nothing from USDA. Otherwise USDA
-  // still supplies the household measures ("1 cup = 100 g") to turn the amount into grams.
+  // A personal entry with a weight ("200 g") needs nothing from USDA. One picked from USDA
+  // uses its own food's household measures ("1 cup = 125 g"). Otherwise USDA's best match
+  // still supplies the measures to turn the amount into grams.
   const lookup =
     personal && isWeightUnit(ingredient.unit)
       ? { food: null, measures: [] }
-      : await lookUpUsda(ingredient, apiKey);
+      : personal?.usdaFdcId
+        ? await personalUsdaMeasures(personal.usdaFdcId, apiKey)
+        : await lookUpUsda(ingredient, apiKey);
   if (!lookup && !personal) {
     return needsReview("lookup_failed");
   }
@@ -111,6 +145,7 @@ async function calorieLineFor(
   const kcalPer100g = personal ? personal.kcalPer100g : food!.kcalPer100g;
   return {
     ingredient: describeIngredient(ingredient),
+    name: ingredient.name,
     source: personal ? "personal" : "usda",
     matchedFood: personal ? personalLabel(personal) : food!.description,
     portion: weight.portion,

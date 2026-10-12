@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   calculateCaloriesPerServing,
   type CalorieEstimate,
+  type CalorieLine,
   type ParsedIngredient,
 } from "@rag-ai/shared";
 import {
@@ -14,6 +15,20 @@ import { ingredientsKey } from "@/lib/recipe-form-values";
 import { toUserMessage } from "@/lib/user-error-messages";
 import { useCalculateCaloriesMutation } from "@/requests/calculate-calories";
 import { CALORIE_REVIEW_REASON_LABELS } from "./const";
+
+/**
+ * "Change" when USDA matched a food (it may be the wrong one), "Find it" when it matched
+ * nothing. Packaged items and amounts that can't be converted aren't fixed by picking a food.
+ */
+function toFixLabel({ source, kcal, reviewReason }: CalorieLine): string | null {
+  if (source === "usda" && kcal !== null) {
+    return "Change";
+  }
+  if (reviewReason === "no_match" || reviewReason === "lookup_failed") {
+    return "Find it";
+  }
+  return null;
+}
 
 /**
  * The recipe form's "Calculate calories": works out calories for the current ingredients
@@ -31,11 +46,14 @@ export function useCalorieEstimate(
   const [estimate, setEstimate] = useState(initialEstimate);
   // The ingredients the estimate was calculated for.
   const [calculatedForKey, setCalculatedForKey] = useState(initialKey);
+  // The breakdown line whose "Change" / "Find it" panel is open.
+  const [fixingLineIndex, setFixingLineIndex] = useState<number | null>(null);
 
   const { mutate, isPending, error, reset: resetMutation } = useCalculateCaloriesMutation({
     onSuccess: (result, calculatedIngredients) => {
       setEstimate(result);
       setCalculatedForKey(ingredientsKey(calculatedIngredients));
+      setFixingLineIndex(null);
     },
   });
 
@@ -52,7 +70,14 @@ export function useCalorieEstimate(
   function resetEstimate() {
     setEstimate(initialEstimate);
     setCalculatedForKey(initialKey);
+    setFixingLineIndex(null);
     resetMutation();
+  }
+
+  /** A fix was saved to your ingredient list — recalculate so the line uses it. */
+  function handleFixSaved() {
+    setFixingLineIndex(null);
+    calculateCalories();
   }
 
   return {
@@ -70,6 +95,9 @@ export function useCalorieEstimate(
           ? CALORIE_REVIEW_REASON_LABELS[line.reviewReason]
           : [line.matchedFood, line.portion].filter(Boolean).join(" · "),
         needsValue: line.reviewReason !== null,
+        // Older saved breakdowns have no name; the full line is close enough to search with.
+        name: line.name ?? line.ingredient,
+        fixLabel: toFixLabel(line),
       })),
     },
     isCalorieEstimateOutdated: isOutdated,
@@ -78,6 +106,10 @@ export function useCalorieEstimate(
     calculateCaloriesErrorMessage: error ? toUserMessage(error, {}) : null,
     calculateCalories,
     resetEstimate,
+    fixingLineIndex,
+    startFix: setFixingLineIndex,
+    closeFix: () => setFixingLineIndex(null),
+    handleFixSaved,
     /** What saving sends: the estimate, unless the ingredients changed since it was calculated. */
     savedEstimate: isOutdated ? null : estimate,
   };

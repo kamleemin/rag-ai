@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { IngredientSource } from "@rag-ai/shared";
 import type { Ingredient } from "@rag-ai/shared/db";
+import { SAVE_INGREDIENT_ERROR_MESSAGES } from "@/const";
+import { formatNutrients, ingredientToFormValues, productToFormValues } from "@/lib/ingredients";
 import { INGREDIENTS_QUERY_KEY } from "@/lib/query-keys";
 import { toUserMessage } from "@/lib/user-error-messages";
 import { useAddIngredientMutation } from "@/requests/add-ingredient";
@@ -9,12 +10,7 @@ import { useDeleteIngredientMutation } from "@/requests/delete-ingredient";
 import { useIngredientsQuery } from "@/requests/list-ingredients";
 import { useUpdateIngredientMutation } from "@/requests/update-ingredient";
 import type { IngredientFormValues, IngredientRequest, OpenFoodFactsProduct } from "@/types";
-import {
-  AddIngredientTab,
-  EMPTY_INGREDIENT_FORM,
-  SAVE_INGREDIENT_ERROR_MESSAGES,
-} from "./const";
-import { formatNutrients, ingredientToFormValues, productToFormValues } from "./utils";
+import { AddIngredientTab, EMPTY_INGREDIENT_FORM, INGREDIENT_SOURCE_LABELS } from "./const";
 
 /** What the form is filled with: an imported product, or a saved ingredient being edited. */
 type Draft = { values: IngredientFormValues; editingId: string | null };
@@ -26,6 +22,10 @@ export function useIngredientsPage() {
   // Bumped to remount the form, so it starts again from the new draft's values.
   const [formKey, setFormKey] = useState(0);
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+  // Filters your list as you type — it's all loaded already, so no request.
+  const [listSearchText, setListSearchText] = useState("");
+  // The add box scrolls on its own (the page doesn't), so Edit scrolls it back to the form.
+  const addCardRef = useRef<HTMLDivElement>(null);
 
   const { data, isPending: isLoading, error: loadError } = useIngredientsQuery();
 
@@ -85,7 +85,7 @@ export function useIngredientsPage() {
 
   function startEditing(ingredient: Ingredient) {
     openDraft({ values: ingredientToFormValues(ingredient), editingId: ingredient.id });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    addCardRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function saveIngredient(ingredient: IngredientRequest) {
@@ -97,6 +97,16 @@ export function useIngredientsPage() {
   }
 
   const saveError = addError ?? updateError;
+  const allIngredients = data?.ingredients ?? [];
+  const query = listSearchText.trim().toLowerCase();
+  // Name, brand, or what it is at its source ("Sugars, granulated").
+  const matchingIngredients = query
+    ? allIngredients.filter((ingredient) =>
+        [ingredient.name, ingredient.brand, ingredient.sourceName].some((text) =>
+          text?.toLowerCase().includes(query)
+        )
+      )
+    : allIngredients;
   const editingName = draft?.editingId ? draft.values.name : null;
 
   return {
@@ -116,11 +126,23 @@ export function useIngredientsPage() {
     pickProduct,
     isLoading,
     loadErrorMessage: loadError ? toUserMessage(loadError, {}) : null,
-    items: (data?.ingredients ?? []).map((ingredient) => ({
+    addCardRef,
+    listSearchText,
+    setListSearchText,
+    ingredientCount: allIngredients.length,
+    emptyListMessage: query
+      ? `Nothing in your list matches "${listSearchText.trim()}".`
+      : "No ingredients yet — add your first one above.",
+    items: matchingIngredients.map((ingredient) => ({
       ingredient,
       title: [ingredient.name, ingredient.brand].filter(Boolean).join(" · "),
       nutrients: formatNutrients(ingredient),
-      sourceLabel: ingredient.source === IngredientSource.OpenFoodFacts ? "OPEN FOOD FACTS" : "MANUAL",
+      sourceLabel: INGREDIENT_SOURCE_LABELS[ingredient.source],
+      // Shown when it differs from your name for it, e.g. USDA's "Chicken, broilers or fryers…".
+      sourceName:
+        ingredient.sourceName && ingredient.sourceName !== ingredient.name
+          ? ingredient.sourceName
+          : null,
     })),
     startEditing,
     confirmingDeleteId,

@@ -48,6 +48,9 @@ export const NAME_SYNONYMS: Record<string, string> = {
   "chili flake": "spices pepper red", "chilli flake": "spices pepper red",
   "red chili flake": "spices pepper red", "red chilli flake": "spices pepper red",
   "red pepper flake": "spices pepper red",
+  // USDA has no "whole chicken"; the whole bird is "Chicken, broilers or fryers, meat and
+  // skin, raw". Without this, "whole" only matched "whole grain breaded" chicken nuggets.
+  "whole chicken": "chicken broilers or fryers meat and skin",
 };
 
 // ---- Ranking USDA's results so the plain food comes first ----
@@ -59,6 +62,12 @@ export const PENALTY_WORDS = [
   "free", "light", "diet", "babyfood", "restaurant", "fast", "human", "infant", "formula",
   "industrial", "substitute", "flavored", "topping", "nonfat", "lowfat", "skim", "powder",
   "chocolate", "strawberry", "sweetened", "smoked", "cured",
+  // processed products ("School Lunch, chicken nuggets, whole grain breaded")
+  "breaded", "nugget", "patty", "school", "lunch",
+  // organ meats — "beef" matched "Beef, variety meats and by-products, brain". Still found
+  // when the recipe names them ("chicken liver"), since required words aren't penalised.
+  "giblet", "gizzard", "heart", "liver", "kidney", "neck", "brain", "tongue", "tripe",
+  "product",
 ];
 
 // The plain form of a food: "Egg, whole, raw", "Pasta, dry", "Milk, whole".

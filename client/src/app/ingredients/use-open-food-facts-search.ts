@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useEnterKey } from "@/hooks/use-enter-key";
+import { formatNutrients } from "@/lib/ingredients";
 import { toUserMessage } from "@/lib/user-error-messages";
 import { useOpenFoodFactsQuery } from "@/requests/search-open-food-facts";
 import { MIN_SEARCH_LENGTH, SEARCH_ERROR_MESSAGES } from "./const";
-import { formatNutrients } from "./utils";
 
 /** Searches only when you press Search or Enter — Open Food Facts allows ~10 searches a minute. */
 export function useOpenFoodFactsSearch() {

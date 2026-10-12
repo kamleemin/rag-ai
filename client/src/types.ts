@@ -5,7 +5,7 @@ import type {
   IngredientSource,
   ParsedIngredient,
 } from "@rag-ai/shared";
-import type { Ingredient } from "@rag-ai/shared/db";
+import type { Category, Ingredient } from "@rag-ai/shared/db";
 
 export type EditableRow = { id: string; [key: string]: string };
 
@@ -30,8 +30,11 @@ export type ApiErrorCode =
   | "ALREADY_SAVED"
   /** Another ingredient in your list already has this name. */
   | "INGREDIENT_EXISTS"
+  /** Another category already has this name (ignoring case). */
+  | "CATEGORY_EXISTS"
   | "OPEN_FOOD_FACTS_RATE_LIMITED"
-  | "OPEN_FOOD_FACTS_FAILED";
+  | "OPEN_FOOD_FACTS_FAILED"
+  | "USDA_SEARCH_FAILED";
 
 /** Every API error response. `error` is technical and may change — never show it to users. */
 export type ApiErrorResponse = { code: ApiErrorCode; error: string };
@@ -59,7 +62,8 @@ export type RecipeFormValues = {
   /** One row per ingredient: { id, name, amount, unit }. */
   ingredients: EditableRow[];
   instructions: string;
-  category: string;
+  /** "" until one is picked — saving needs one. */
+  categoryId: string;
   /**
    * The last "Calculate calories" result — null when it hasn't been calculated, or the
    * ingredients changed since (an outdated result is never saved).
@@ -80,7 +84,7 @@ export type UpdateRecipeRequest = {
   servings: string;
   ingredients: ParsedIngredient[];
   instructions: string;
-  category: string;
+  categoryId: string;
   calorieEstimate: CalorieEstimate | null;
 };
 
@@ -96,6 +100,11 @@ export type SaveRecipeRequest = UpdateRecipeRequest & {
 /** What the add-recipe page hands to the review screen: the extraction and the link it came from. */
 export type ExtractedRecipe = ExtractTikTokResponse & { sourceUrl: string };
 
+export type ListCategoriesResponse = { categories: Category[] };
+
+/** Body of POST /api/add-category. */
+export type AddCategoryRequest = { name: string };
+
 export type ListIngredientsResponse = { ingredients: Ingredient[] };
 
 /** Body of POST /api/add-ingredient and POST /api/update-ingredient/[id]. Nutrients are per 100 g. */
@@ -109,6 +118,9 @@ export type IngredientRequest = {
   proteinPer100g: number | null;
   source: IngredientSource;
   openFoodFactsCode: string | null;
+  usdaFdcId: number | null;
+  /** The food's name at its source, e.g. USDA's "Chicken, broilers or fryers, meat and skin, raw". */
+  sourceName: string | null;
 };
 
 /** One Open Food Facts search result, trimmed to what the ingredient list uses. Per 100 g. */
@@ -138,4 +150,19 @@ export type IngredientFormValues = {
   proteinPer100g: string;
   source: IngredientSource;
   openFoodFactsCode: string | null;
+  usdaFdcId: number | null;
+  sourceName: string | null;
 };
+
+/** One USDA food from GET /api/usda-foods. Per 100 g. */
+export type UsdaFoodResult = {
+  fdcId: number;
+  name: string;
+  kcalPer100g: number;
+  fatPer100g: number | null;
+  carbsPer100g: number | null;
+  fibrePer100g: number | null;
+  proteinPer100g: number | null;
+};
+
+export type SearchUsdaFoodsResponse = { foods: UsdaFoodResult[] };

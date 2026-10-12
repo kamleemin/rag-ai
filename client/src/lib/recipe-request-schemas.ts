@@ -17,6 +17,7 @@ export const ingredientSchema = z.object({
 
 const calorieLineSchema = z.object({
   ingredient: z.string(),
+  name: z.string().optional(),
   source: z.enum(["personal", "usda"]).nullable(),
   matchedFood: z.string().nullable(),
   portion: z.string().nullable(),
@@ -39,7 +40,7 @@ export const recipeFieldsSchema = z.object({
   servings: z.string().trim(),
   ingredients: z.array(ingredientSchema),
   instructions: z.string().trim(),
-  category: z.string().trim().min(1),
+  categoryId: z.uuid(),
   calorieEstimate: calorieEstimateSchema.nullable(),
 });
 
@@ -56,7 +57,7 @@ export function toRecipeColumns({
   servings,
   ingredients,
   instructions,
-  category,
+  categoryId,
   calorieEstimate,
 }: RecipeFields) {
   const calories = calorieEstimate?.calories ?? null;
@@ -67,7 +68,7 @@ export function toRecipeColumns({
     // Blank rows from the form ("+ Add ingredient" left empty) aren't ingredients.
     ingredients: ingredients.filter((ingredient) => ingredient.name),
     instructions: instructions || null,
-    category,
+    categoryId,
     calories,
     caloriesPerServing: calculateCaloriesPerServing(calories, servings || null),
     calorieConfidence: calorieEstimate?.calorieConfidence ?? null,

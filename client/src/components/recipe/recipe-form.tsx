@@ -13,7 +13,6 @@ import SectionHeader from "@/components/recipe/section-header";
 import MonoBadge from "@/components/recipe/mono-badge";
 import EditableRowTable from "@/components/recipe/editable-row-table";
 import CalorieSection from "@/components/recipe/calorie-section";
-import { RECIPE_CATEGORIES } from "@rag-ai/shared";
 import { cn } from "@/lib/utils";
 import type { RecipeFormValues } from "@/types";
 import { RECIPE_FORM_PLACEHOLDERS } from "./const";
@@ -56,10 +55,17 @@ export default function RecipeForm({
     updateRow,
     removeRow,
     addRow,
-    category,
-    setCategory,
+    categoryItems,
+    categoryId,
+    setCategoryId,
     isAddingCategory,
     toggleAddingCategory,
+    newCategoryName,
+    setNewCategoryName,
+    addCategory,
+    handleNewCategoryKeyDown,
+    isSavingCategory,
+    addCategoryErrorMessage,
     title,
     setTitle,
     description,
@@ -74,6 +80,10 @@ export default function RecipeForm({
     isCalculatingCalories,
     calculateCaloriesErrorMessage,
     calculateCalories,
+    fixingLineIndex,
+    startFix,
+    closeFix,
+    handleFixSaved,
     reset,
     handleSubmit,
   } = useRecipeForm(initialValues, onSubmit);
@@ -139,14 +149,18 @@ export default function RecipeForm({
 
       <SectionHeader step="04" label="Category" />
       <div className="mb-2.5 flex items-center gap-2.5">
-        <Select value={category} onValueChange={(value) => value && setCategory(value)}>
+        <Select
+          items={categoryItems}
+          value={categoryId || null}
+          onValueChange={(value) => value && setCategoryId(value)}
+        >
           <SelectTrigger className={cn("flex-1", FIELD_CLASS)}>
-            <SelectValue />
+            <SelectValue placeholder="Choose a category" />
           </SelectTrigger>
           <SelectContent>
-            {RECIPE_CATEGORIES.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
+            {categoryItems.map(({ value, label }) => (
+              <SelectItem key={value} value={value}>
+                {label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -154,14 +168,38 @@ export default function RecipeForm({
         {detected && <MonoBadge variant="green">AUTO-SUGGESTED</MonoBadge>}
       </div>
       {isAddingCategory && (
-        <Input placeholder="New category name" className={cn("mb-9", FIELD_CLASS)} />
+        <div className="mb-3">
+          <div className="flex flex-wrap gap-2.5">
+            <Input
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              onKeyDown={handleNewCategoryKeyDown}
+              placeholder="New category name"
+              autoFocus
+              className={cn("min-w-[180px] flex-1", FIELD_CLASS)}
+            />
+            <button
+              type="button"
+              onClick={addCategory}
+              disabled={!newCategoryName.trim() || isSavingCategory}
+              className="rounded-md border border-border px-4 font-sans text-[13px] font-semibold text-ink disabled:opacity-60"
+            >
+              {isSavingCategory ? "Adding…" : "Add"}
+            </button>
+          </div>
+          {addCategoryErrorMessage && (
+            <p role="alert" className="mt-2 text-[13px] text-red-600">
+              {addCategoryErrorMessage}
+            </p>
+          )}
+        </div>
       )}
       <button
         type="button"
         onClick={toggleAddingCategory}
         className="mb-9 block font-sans text-[13px] text-tan underline"
       >
-        + Add new category
+        {isAddingCategory ? "Cancel new category" : "+ Add new category"}
       </button>
 
       <CalorieSection
@@ -172,6 +210,10 @@ export default function RecipeForm({
         isCalculating={isCalculatingCalories}
         errorMessage={calculateCaloriesErrorMessage}
         onCalculate={calculateCalories}
+        fixingLineIndex={fixingLineIndex}
+        onStartFix={startFix}
+        onCloseFix={closeFix}
+        onFixSaved={handleFixSaved}
       />
 
       {submitError && (

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useCategoryField } from "@/hooks/use-category-field";
 import { useEditableRows } from "@/hooks/use-editable-rows";
-import { RECIPE_CATEGORIES } from "@rag-ai/shared";
 import { toParsedIngredients } from "@/lib/recipe-form-values";
 import type { EditableRow, RecipeFormValues } from "@/types";
 import { useCalorieEstimate } from "./use-calorie-estimate";
@@ -24,10 +23,20 @@ export function useRecipeForm(
     initialRows,
     emptyIngredientRow
   );
-  const { category, setCategory, isAddingCategory, toggleAddingCategory, resetCategory } =
-    useCategoryField(
-    initialValues.category ?? RECIPE_CATEGORIES[0]
-  );
+  const {
+    categories,
+    categoryId,
+    setCategoryId,
+    isAddingCategory,
+    toggleAddingCategory,
+    newCategoryName,
+    setNewCategoryName,
+    addCategory,
+    handleNewCategoryKeyDown,
+    isSavingCategory,
+    addCategoryErrorMessage,
+    resetCategory,
+  } = useCategoryField(initialValues.categoryId ?? "");
   const [title, setTitle] = useState(initialValues.title ?? "");
   const [description, setDescription] = useState(initialValues.description ?? "");
   const [servings, setServings] = useState(initialValues.servings ?? "");
@@ -41,6 +50,10 @@ export function useRecipeForm(
     calculateCalories,
     resetEstimate,
     savedEstimate,
+    fixingLineIndex,
+    startFix,
+    closeFix,
+    handleFixSaved,
   } = useCalorieEstimate(
     toParsedIngredients(rows),
     servings,
@@ -66,7 +79,7 @@ export function useRecipeForm(
       servings,
       ingredients: rows,
       instructions,
-      category,
+      categoryId,
       calorieEstimate: savedEstimate,
     });
   }
@@ -76,10 +89,18 @@ export function useRecipeForm(
     updateRow,
     removeRow,
     addRow,
-    category,
-    setCategory,
+    // { value, label } for the dropdown, so the selected id shows as its name.
+    categoryItems: categories.map((c) => ({ value: c.id, label: c.name })),
+    categoryId,
+    setCategoryId,
     isAddingCategory,
     toggleAddingCategory,
+    newCategoryName,
+    setNewCategoryName,
+    addCategory,
+    handleNewCategoryKeyDown,
+    isSavingCategory,
+    addCategoryErrorMessage,
     title,
     setTitle,
     description,
@@ -94,6 +115,10 @@ export function useRecipeForm(
     isCalculatingCalories,
     calculateCaloriesErrorMessage,
     calculateCalories,
+    fixingLineIndex,
+    startFix,
+    closeFix,
+    handleFixSaved,
     reset,
     handleSubmit,
   };

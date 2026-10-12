@@ -1,13 +1,11 @@
 "use client";
 
-import { IngredientSource } from "@rag-ai/shared";
 import { Input } from "@/components/ui/input";
 import SuffixInput from "@/components/common/suffix-input";
 import { cn } from "@/lib/utils";
 import type { IngredientFormValues, IngredientRequest } from "@/types";
 import { NUTRIENT_FIELDS } from "./const";
 import { useIngredientForm } from "./use-ingredient-form";
-import { openFoodFactsProductUrl } from "./utils";
 
 const LABEL_CLASS = "mb-2 block font-mono text-[10px] tracking-[0.06em] text-tan uppercase";
 const FIELD_CLASS = "h-auto rounded-md border-border bg-muted px-3.5 py-3 text-sm text-ink";
@@ -29,29 +27,28 @@ export default function IngredientForm({
   isSubmitting: boolean;
   submitError: string | null;
 }) {
-  const { values, setField, validationError, handleSubmit } = useIngredientForm(
+  const { values, setField, sourceLink, validationError, handleSubmit } = useIngredientForm(
     initialValues,
     onSubmit
   );
   const errorMessage = validationError ?? submitError;
-  const importedCode =
-    values.source === IngredientSource.OpenFoodFacts ? values.openFoodFactsCode : null;
 
   return (
     <div>
-      {importedCode && (
+      {sourceLink && (
         <p className="mb-4 text-xs text-body-text">
-          From Open Food Facts —{" "}
+          From {sourceLink.from}
+          {sourceLink.name && <>: {sourceLink.name}</>} —{" "}
           <a
-            href={openFoodFactsProductUrl(importedCode)}
+            href={sourceLink.url}
             target="_blank"
             rel="noopener noreferrer"
             className="text-green underline"
           >
-            view product ↗
+            view ↗
           </a>
-          . Rename it to how your recipes write it (e.g. &quot;Bread flour&quot;) — recipes
-          find ingredients by name.
+          . Name it how your recipes write it (e.g. &quot;Bread flour&quot;) — recipes find
+          ingredients by name.
         </p>
       )}
       <div className="mb-5 grid gap-4 sm:grid-cols-2">

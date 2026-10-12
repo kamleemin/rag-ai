@@ -1,7 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { desc, eq } from "drizzle-orm";
 import type { ListRecipesResponse } from "@rag-ai/shared";
-import { recipes, recipeSummaryColumns, toRecipeSummary } from "@rag-ai/shared/db";
+import {
+  categories,
+  recipeCategoryJoin,
+  recipes,
+  recipeSummaryColumns,
+  toRecipeSummary,
+} from "@rag-ai/shared/db";
 import { db } from "@/db/db";
 import { rejectWithoutSession } from "@/lib/session";
 
@@ -18,6 +24,7 @@ export async function GET(request: NextRequest) {
   const rows = await db
     .select(recipeSummaryColumns)
     .from(recipes)
+    .leftJoin(categories, recipeCategoryJoin)
     .where(needsReviewOnly ? eq(recipes.needsReview, true) : undefined)
     .orderBy(desc(recipes.createdAt));
 

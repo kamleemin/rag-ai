@@ -6,7 +6,13 @@ const USDA_API_URL = "https://api.nal.usda.gov/fdc/v1";
 // out on purpose — it's where wrong matches like "Egg, Benedict" and "Dirty rice" came from.
 // Their household measures need a second request (getUsdaMeasures).
 const USDA_DATA_TYPES = ["SR Legacy", "Foundation"];
-const ENERGY_KCAL_NUTRIENT_ID = 1008;
+const NUTRIENT_IDS = {
+  kcal: 1008,
+  fat: 1004,
+  carbs: 1005,
+  fibre: 1079,
+  protein: 1003,
+} as const;
 // USDA ranks plain foods badly for one-word searches (whole milk is #94 for "milk",
 // plain rice isn't in the top 100), so fetch everything up to USDA's maximum and let
 // the matching rules rank. One-word searches have ~100–250 results in total.
@@ -22,6 +28,11 @@ export type UsdaFood = {
   description: string;
   dataType: string;
   kcalPer100g: number;
+  /** Grams per 100 g; null when USDA doesn't list it. */
+  fatPer100g: number | null;
+  carbsPer100g: number | null;
+  fibrePer100g: number | null;
+  proteinPer100g: number | null;
   /** Usually empty in search results — call getUsdaMeasures. */
   measures: UsdaMeasure[];
 };
@@ -116,10 +127,10 @@ export function searchUsdaFoods(query: string, apiKey: string): Promise<UsdaFood
       apiKey
     );
     return searchResponseSchema.parse(data).foods.flatMap((food) => {
-      const kcal = food.foodNutrients.find(
-        (n) => n.nutrientId === ENERGY_KCAL_NUTRIENT_ID
-      )?.value;
-      if (kcal === undefined) {
+      const nutrient = (id: number) =>
+        food.foodNutrients.find((n) => n.nutrientId === id)?.value ?? null;
+      const kcal = nutrient(NUTRIENT_IDS.kcal);
+      if (kcal === null) {
         return [];
       }
       return [
@@ -128,6 +139,10 @@ export function searchUsdaFoods(query: string, apiKey: string): Promise<UsdaFood
           description: food.description,
           dataType: food.dataType,
           kcalPer100g: kcal,
+          fatPer100g: nutrient(NUTRIENT_IDS.fat),
+          carbsPer100g: nutrient(NUTRIENT_IDS.carbs),
+          fibrePer100g: nutrient(NUTRIENT_IDS.fibre),
+          proteinPer100g: nutrient(NUTRIENT_IDS.protein),
           measures: (food.foodMeasures ?? []).map((m) => ({
             text: m.disseminationText,
             grams: m.gramWeight,
@@ -139,7 +154,7 @@ export function searchUsdaFoods(query: string, apiKey: string): Promise<UsdaFood
 }
 
 /** Household measures for a food ("1 cup = 100 g") — SR Legacy and Foundation only return them from the details endpoint. */
-export function getUsdaMeasures(food: UsdaFood, apiKey: string): Promise<UsdaMeasure[]> {
+export function getUsdaMeasures(food: Pick<UsdaFood, "fdcId" | "measures">, apiKey: string): Promise<UsdaMeasure[]> {
   if (food.measures.length > 0) {
     return Promise.resolve(food.measures);
   }

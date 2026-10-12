@@ -2,7 +2,6 @@ import express, { type Request, type Response } from "express";
 import * as z from "zod";
 import {
   LOCAL_SERVER_PATHS,
-  RECIPE_CATEGORIES,
   type AddRecipeResponse,
   type AskResponse,
   type ExtractTikTokResponse,
@@ -88,7 +87,7 @@ app.post(LOCAL_SERVER_PATHS.extractTikTok, async (req, res) => {
   let recipe: ExtractTikTokResponse["recipe"] = null;
   try {
     extraction = await extractFromTikTok(parsedRequest.data.url);
-    recipe = await parseRecipe(extraction, RECIPE_CATEGORIES);
+    recipe = await parseRecipe(extraction);
   } catch (err) {
     console.error("Failed to extract or parse recipe:", err);
   }

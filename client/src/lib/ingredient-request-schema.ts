@@ -24,7 +24,15 @@ export const ingredientRequestSchema = z.object({
   fibrePer100g: nutrientSchema,
   proteinPer100g: nutrientSchema,
   source: z.enum(IngredientSource),
-  openFoodFactsCode: z.string().trim().nullable(),
+  // Where an import came from — optional, so a missing field means none (null).
+  openFoodFactsCode: z.string().trim().nullable().default(null),
+  usdaFdcId: z.number().int().positive().nullable().default(null),
+  sourceName: z
+    .string()
+    .trim()
+    .nullable()
+    .default(null)
+    .transform((name) => name || null),
 }) satisfies z.ZodType<IngredientRequest, unknown>;
 
 /**

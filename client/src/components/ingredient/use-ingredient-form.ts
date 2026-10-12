@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { IngredientSource } from "@rag-ai/shared";
+import { openFoodFactsProductUrl, usdaFoodUrl } from "@/lib/ingredients";
 import type { IngredientFormValues, IngredientRequest } from "@/types";
 import { INVALID_NUMBER_MESSAGE, MISSING_FIELDS_MESSAGE } from "./const";
 
@@ -10,6 +12,17 @@ function parseNutrient(text: string): number | null {
 
 function isInvalid(value: number | null): boolean {
   return value !== null && (Number.isNaN(value) || value < 0);
+}
+
+/** Where an imported entry came from, with a link to it; null for one typed in. */
+function toSourceLink({ source, openFoodFactsCode, usdaFdcId, sourceName }: IngredientFormValues) {
+  if (source === IngredientSource.OpenFoodFacts && openFoodFactsCode) {
+    return { from: "Open Food Facts", name: sourceName, url: openFoodFactsProductUrl(openFoodFactsCode) };
+  }
+  if (source === IngredientSource.Usda && usdaFdcId) {
+    return { from: "USDA", name: sourceName, url: usdaFoodUrl(usdaFdcId) };
+  }
+  return null;
 }
 
 export function useIngredientForm(
@@ -49,8 +62,16 @@ export function useIngredientForm(
       ...nutrients,
       source: values.source,
       openFoodFactsCode: values.openFoodFactsCode,
+      usdaFdcId: values.usdaFdcId,
+      sourceName: values.sourceName,
     });
   }
 
-  return { values, setField, validationError, handleSubmit };
+  return {
+    values,
+    setField,
+    sourceLink: toSourceLink(initialValues),
+    validationError,
+    handleSubmit,
+  };
 }

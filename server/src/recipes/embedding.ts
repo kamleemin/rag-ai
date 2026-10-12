@@ -1,12 +1,15 @@
 import { eq, isNull } from "drizzle-orm";
-import { recipes } from "@rag-ai/shared/db";
+import { categories, recipeCategoryJoin, recipes } from "@rag-ai/shared/db";
 import { db } from "../db/index.js";
 import { embed } from "../ollama/index.js";
 
 type EmbeddableRecipe = Pick<
   typeof recipes.$inferSelect,
-  "title" | "category" | "ingredients" | "instructions"
->;
+  "title" | "ingredients" | "instructions"
+> & {
+  /** The category's name (recipes store its id). */
+  category: string | null;
+};
 
 /** Title + category + ingredient names + steps — amounts/units only add noise to similarity. */
 export function recipeEmbeddingText(recipe: EmbeddableRecipe): string {
@@ -33,11 +36,12 @@ export async function embedMissingRecipes(): Promise<number> {
     .select({
       id: recipes.id,
       title: recipes.title,
-      category: recipes.category,
+      category: categories.name,
       ingredients: recipes.ingredients,
       instructions: recipes.instructions,
     })
     .from(recipes)
+    .leftJoin(categories, recipeCategoryJoin)
     .where(isNull(recipes.embedding));
 
   for (const recipe of missing) {

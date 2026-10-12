@@ -23,6 +23,13 @@ export const EMBEDDING_DIMENSIONS = 768;
 // Every table's id is a random UUID made by Postgres (gen_random_uuid()) — not guessable,
 // and never sequential, so ids reveal nothing about how many rows exist.
 
+/** Recipe categories (Pasta, Dessert…). Recipes point at one by id, so renaming one renames it everywhere. */
+export const categories = snakeCase.table("categories", {
+  id: uuid().primaryKey().defaultRandom(),
+  name: text().notNull().unique(),
+  createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+});
+
 export const recipes = snakeCase.table("recipes", {
   id: uuid().primaryKey().defaultRandom(),
   // The readable part of recipe links (/recipes/shio-pan-x7kp2m) — see generateShortId.
@@ -34,7 +41,8 @@ export const recipes = snakeCase.table("recipes", {
   totalMinutes: integer(),
   ingredients: jsonb().$type<ParsedIngredient[]>().notNull().default([]),
   instructions: text(),
-  category: text(),
+  // Deleting a category leaves its recipes uncategorised rather than deleting them.
+  categoryId: uuid().references(() => categories.id, { onDelete: "set null" }),
   calories: integer(),
   // calories ÷ servings, saved alongside them; a servings range ("2-3") uses its midpoint.
   caloriesPerServing: integer(),
@@ -74,5 +82,11 @@ export const ingredients = snakeCase.table("ingredients", {
   source: ingredientSource().notNull().default(IngredientSource.Manual),
   // The product's barcode when imported from Open Food Facts, to link back to it.
   openFoodFactsCode: text(),
+  // The USDA food's id when picked from USDA. Its household measures ("1 cup = 125 g")
+  // convert recipe amounts for this entry.
+  usdaFdcId: integer(),
+  // The food's name where it came from ("Chicken, broilers or fryers, meat and skin, raw"),
+  // since you usually rename imports to how recipes write them ("Whole chicken").
+  sourceName: text(),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });

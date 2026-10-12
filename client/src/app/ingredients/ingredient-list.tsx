@@ -7,6 +7,7 @@ type IngredientItem = ReturnType<typeof useIngredientsPage>["items"][number];
 /** Your saved ingredients, each with Edit and a two-step Delete. */
 export default function IngredientList({
   items,
+  emptyMessage,
   confirmingDeleteId,
   isDeleting,
   onEdit,
@@ -15,6 +16,8 @@ export default function IngredientList({
   onCancelDelete,
 }: {
   items: IngredientItem[];
+  /** Shown when there's nothing to list (empty list, or nothing matches the search). */
+  emptyMessage: string;
   confirmingDeleteId: string | null;
   isDeleting: boolean;
   onEdit: (ingredient: Ingredient) => void;
@@ -24,19 +27,20 @@ export default function IngredientList({
 }) {
   if (items.length === 0) {
     return (
-      <p className="text-sm text-body-text">No ingredients yet — add your first one above.</p>
+      <p className="text-sm text-body-text">{emptyMessage}</p>
     );
   }
 
   return (
     <ul className="divide-y divide-border rounded-lg border border-border bg-white">
-      {items.map(({ ingredient, title, nutrients, sourceLabel }) => (
+      {items.map(({ ingredient, title, nutrients, sourceLabel, sourceName }) => (
         <li key={ingredient.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-ink">{title}</span>
               <MonoBadge>{sourceLabel}</MonoBadge>
             </div>
+            {sourceName && <div className="text-xs text-body-text">{sourceName}</div>}
             <div className="text-xs text-tan-tint-text">{nutrients} per 100 g</div>
           </div>
           {confirmingDeleteId === ingredient.id ? (

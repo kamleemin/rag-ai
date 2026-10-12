@@ -1,15 +1,16 @@
-import { eq, isNotNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import {
   calculateCaloriesPerServing,
   generateShortId,
   normalizeVideoUrl,
   PendingVideoStatus,
-  RECIPE_CATEGORIES,
   type AddRecipeResponse,
   type ParsedRecipe,
 } from "@rag-ai/shared";
 import {
+  categories,
   pendingVideos,
+  recipeCategoryJoin,
   recipes,
   recipeSummaryColumns,
   toRecipeSummary,
@@ -26,11 +27,23 @@ const BLANK_RECIPE: ParsedRecipe = {
   totalMinutes: null,
   ingredients: [],
   instructions: null,
-  category: null,
+  categoryId: null,
   calories: null,
   calorieConfidence: null,
   calorieBreakdown: [],
 };
+
+async function findCategoryName(categoryId: string | null): Promise<string | null> {
+  if (!categoryId) {
+    return null;
+  }
+  const [row] = await db
+    .select({ name: categories.name })
+    .from(categories)
+    .where(eq(categories.id, categoryId))
+    .limit(1);
+  return row?.name ?? null;
+}
 
 async function findSavedRecipeId(url: string): Promise<string | null> {
   const [row] = await db
@@ -39,15 +52,6 @@ async function findSavedRecipeId(url: string): Promise<string | null> {
     .where(eq(recipes.sourceUrl, url))
     .limit(1);
   return row?.id ?? null;
-}
-
-async function getCategories(): Promise<string[]> {
-  const rows = await db
-    .selectDistinct({ category: recipes.category })
-    .from(recipes)
-    .where(isNotNull(recipes.category));
-  const saved = rows.map((r) => r.category).filter((c) => c !== null);
-  return [...new Set([...RECIPE_CATEGORIES, ...saved])];
 }
 
 /**
@@ -67,9 +71,12 @@ export async function addRecipe(rawUrl: string): Promise<AddRecipeResponse> {
 
   try {
     const extraction = await extractFromTikTok(url);
-    const parsed = await parseRecipe(extraction, await getCategories());
+    const parsed = await parseRecipe(extraction);
     const recipe = parsed ?? BLANK_RECIPE;
-    const embedding = await embedRecipe(recipe);
+    const embedding = await embedRecipe({
+      ...recipe,
+      category: await findCategoryName(recipe.categoryId),
+    });
 
     const [row] = await db
       .insert(recipes)
@@ -82,7 +89,7 @@ export async function addRecipe(rawUrl: string): Promise<AddRecipeResponse> {
         embedding,
       })
       .onConflictDoNothing({ target: recipes.sourceUrl })
-      .returning(recipeSummaryColumns);
+      .returning({ id: recipes.id });
 
     await db.delete(pendingVideos).where(eq(pendingVideos.url, url));
 
@@ -90,7 +97,13 @@ export async function addRecipe(rawUrl: string): Promise<AddRecipeResponse> {
     if (!row) {
       return { status: "already_saved", recipeId: (await findSavedRecipeId(url))! };
     }
-    return { status: "saved", recipe: toRecipeSummary(row) };
+    // An insert can't return the joined category name, so read the summary back.
+    const [summary] = await db
+      .select(recipeSummaryColumns)
+      .from(recipes)
+      .leftJoin(categories, recipeCategoryJoin)
+      .where(eq(recipes.id, row.id));
+    return { status: "saved", recipe: toRecipeSummary(summary) };
   } catch (err) {
     await db
       .update(pendingVideos)
