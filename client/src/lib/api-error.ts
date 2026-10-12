@@ -17,6 +17,8 @@ const STATUS_BY_CODE: Record<ApiErrorCode, number> = {
   OPEN_FOOD_FACTS_RATE_LIMITED: 429,
   OPEN_FOOD_FACTS_FAILED: 502,
   USDA_SEARCH_FAILED: 502,
+  // Never sent by a route — the frontend sets it when the PC server can't be reached.
+  RECIPE_SERVER_UNREACHABLE: 502,
 };
 
 /**

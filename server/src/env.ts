@@ -9,7 +9,8 @@ const envSchema = z.object({
   CORS_ORIGINS: z
     .string()
     .default("http://localhost:3000")
-    .transform((value) => value.split(",").map((origin) => origin.trim())),
+    // Browsers send origins without a trailing slash, so "https://x.vercel.app/" would never match.
+    .transform((value) => value.split(",").map((origin) => origin.trim().replace(/\/+$/, ""))),
   OLLAMA_BASE_URL: z.string().default("http://localhost:11434"),
   OLLAMA_MODEL: z.string().default("llama3:8b"),
   // Changing this means every recipe must be re-embedded (`npm run reembed`).
