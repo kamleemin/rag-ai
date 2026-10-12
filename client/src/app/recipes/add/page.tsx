@@ -8,7 +8,6 @@ import RecipeForm from "@/components/recipe/recipe-form";
 import { ADD_RECIPE_TABS, AddRecipeTab } from "./const";
 import { useAddRecipeForm } from "./use-add-recipe-form";
 import GeneratingRecipe from "./generating-recipe";
-import PendingVideosBanner from "./pending-videos-banner";
 
 export default function AddRecipePage({ searchParams }: PageProps<"/recipes/add">) {
   // A link shared from the phone's share sheet opens /recipes/add?url=…
@@ -18,12 +17,10 @@ export default function AddRecipePage({ searchParams }: PageProps<"/recipes/add"
     setTab,
     videoUrl,
     setVideoUrl,
-    canGenerate,
     isServerUnreachable,
     submitLabel,
     isSubmittingLink,
     isGenerating,
-    generate,
     videoLinkErrorMessage,
     savedForLaterNotice,
     submitVideoLink,
@@ -47,11 +44,6 @@ export default function AddRecipePage({ searchParams }: PageProps<"/recipes/add"
       <PageHeader backHref="/recipes" title="Add a Recipe" />
 
       <div className="mx-auto max-w-[720px] px-5 py-8 pb-20 sm:px-10">
-        <PendingVideosBanner
-          canGenerate={canGenerate}
-          isServerUnreachable={isServerUnreachable}
-          onGenerate={generate}
-        />
         <SegmentedTabs tabs={ADD_RECIPE_TABS} value={tab} onChange={setTab} className="mb-7" />
 
         {tab === AddRecipeTab.Video && (

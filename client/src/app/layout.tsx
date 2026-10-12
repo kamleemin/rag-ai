@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Outfit, JetBrains_Mono } from "next/font/google";
 import Navbar from "@/components/navbar";
+import PendingVideosBanner from "@/components/common/pending-videos-banner";
 import Providers from "./providers";
 import "./globals.css";
 
@@ -37,6 +38,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col font-sans">
         <Providers>
           <Navbar />
+          {/* Links saved for later (e.g. shared from the phone) — on every page. */}
+          <PendingVideosBanner />
           {children}
         </Providers>
       </body>
