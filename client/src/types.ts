@@ -34,7 +34,9 @@ export type ApiErrorCode =
   | "CATEGORY_EXISTS"
   | "OPEN_FOOD_FACTS_RATE_LIMITED"
   | "OPEN_FOOD_FACTS_FAILED"
-  | "USDA_SEARCH_FAILED";
+  | "USDA_SEARCH_FAILED"
+  /** The browser couldn't reach the recipe server on this PC (set on the frontend, not by the API). */
+  | "RECIPE_SERVER_UNREACHABLE";
 
 /** Every API error response. `error` is technical and may change — never show it to users. */
 export type ApiErrorResponse = { code: ApiErrorCode; error: string };
