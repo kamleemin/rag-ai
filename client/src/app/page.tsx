@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { suggestionChips } from "@/lib/mock-data";
 import { PATHNAMES } from "@/lib/pathnames";
+import { SUGGESTION_CHIPS } from "./const";
 import { useHomeSearch } from "./use-home-search";
 
 export default function Home() {
@@ -25,7 +25,7 @@ export default function Home() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleInputKeyDown}
-          placeholder="I have chicken and spinach, what can I make?"
+          placeholder="What can I make?"
           className="h-auto rounded-lg border-border bg-muted px-4.5 py-3.5 text-sm text-ink placeholder:text-tan"
         />
         <Button
@@ -37,7 +37,7 @@ export default function Home() {
       </form>
 
       <div className="mt-5 flex max-w-[560px] flex-wrap justify-center gap-2.5">
-        {suggestionChips.map((chip) => (
+        {SUGGESTION_CHIPS.map((chip) => (
           <button
             key={chip}
             type="button"

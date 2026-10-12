@@ -14,11 +14,11 @@ export type TikTokMetadata = {
 export async function fetchTikTokMetadata(
   url: string
 ): Promise<TikTokMetadata> {
-  const { stdout } = await execFileAsync("yt-dlp", [
-    "--dump-json",
-    "--skip-download",
-    url,
-  ]);
+  const { stdout } = await execFileAsync(
+    "yt-dlp",
+    ["--dump-json", "--skip-download", "--impersonate", "chrome", url],
+    { timeout: 30_000 }
+  );
   const data = JSON.parse(stdout);
 
   return {
@@ -41,17 +41,4 @@ export function pickCaptionTrack(
   };
 
   return fromTracks(metadata.subtitles) ?? fromTracks(metadata.automaticCaptions);
-}
-
-export async function downloadBestAudio(
-  url: string,
-  outputPath: string
-): Promise<void> {
-  await execFileAsync("yt-dlp", [
-    "-f",
-    "bestaudio",
-    "-o",
-    outputPath,
-    url,
-  ]);
 }

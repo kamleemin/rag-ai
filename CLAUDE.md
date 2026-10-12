@@ -8,3 +8,61 @@
 - When an import is used only as a type (interfaces, type aliases, type-only usages of a class), import it with `import type` instead of importing the module itself.
 - A type used by 2+ files belongs in a shared `types.ts` (root of `src/`, or a `types/` folder if it grows) rather than being defined in one file and imported into others. A type used by only one file can stay local to it.
 - A route/component-local file of constants (columns, options, etc.) used by only that route or component should just be named `const.ts` next to it — don't overcomplicate the name (e.g. no need for `ingredients-columns.ts`).
+- Use an enum for a fixed set of values (tabs, statuses…) instead of repeating string literals. An enum is a runtime value, not a type, so it goes in a const file — never in `types.ts`, which holds only types (type aliases, interfaces). Same placement as other constants: the route/component's `const.ts` when only it uses the enum (e.g. `AddRecipeTab` in `app/recipes/add/const.ts`), `src/const.ts` when 2+ routes or components do.
+
+## Code style
+
+- Always wrap `if` bodies in braces, even for a single statement — no one-line `if (x) return y;`:
+
+  ```ts
+  if (unauthorized) {
+    return unauthorized;
+  }
+  ```
+
+- Destructure the fields you use from a hook's result instead of keeping the whole object and reading properties off it:
+
+  ```ts
+  const { mutate, isPending, error } = useLogInMutation({ ... });
+  mutate(password);
+  ```
+
+  rather than `const login = useLogInMutation(...)` + `login.mutate(...)` / `login.isPending`. Exception: don't destructure methods off class instances such as `useQueryClient()` — they rely on `this` and break when pulled off (`const { clear } = queryClient; clear()` throws). Spreading a whole hook result into a return value (`...categoryField`) is fine.
+
+## Error handling
+
+- Never swallow an error into a placeholder value (`.catch(() => null)`, an empty `catch {}`, returning `false`/`[]` silently). Every caught exception must be logged with `captureException(error, "what was being attempted")` from `src/lib/capture-exception.ts` — not a raw `console.error` — and then handled explicitly (return an error response, a fallback, or rethrow).
+- Pass whatever was caught straight to `captureException` — it accepts any thrown value (Error, string, object, array, null…) and serializes it safely. Don't `JSON.stringify` or format errors yourself: `JSON.stringify(new Error("x"))` is `"{}"`, and it throws on circular objects and BigInt.
+- Route handlers read and validate their JSON body with `parseJsonBody(request, schema)` from `src/lib/parse-json-body.ts`, which logs invalid JSON and returns a ready-made 400 (`INVALID_JSON` / `INVALID_BODY`):
+
+  ```ts
+  const parsed = await parseJsonBody(request, requestSchema);
+  if (!parsed.success) {
+    return parsed.response;
+  }
+  ```
+
+## API requests
+
+- Every API route path handles exactly one HTTP method, and the path is named after what it does — never a GET and a POST (or any two methods) on the same path. Reads are named after the thing (`GET /api/recipes`, `GET /api/pending-videos`); writes are named after the action (`POST /api/save-recipe`, `POST /api/add-pending-video`, `DELETE /api/delete-pending-video/[id]`). A new write gets its own route folder rather than another export in an existing `route.ts`. These cloud routes are separate from the PC server's (`/add-recipe`, `/ask`, …) — keep their names distinct too.
+
+- Every API call the frontend makes lives in `src/requests/`, one file per endpoint, named after it (`login.ts`, `logout.ts`, `extract-tiktok.ts`). Each file has the plain `fetch` function first, then the React Query hook that wraps it directly below:
+
+  ```ts
+  // src/requests/login.ts
+  export async function logIn(password: string): Promise<void> {
+    const res = await fetch(API_PATHS.login, { method: "POST", ... });
+    await handleApiError(res);
+  }
+
+  export function useLogInMutation(options?: RequestMutationOptions<void, string>) {
+    return useMutation({ mutationFn: logIn, ...options });
+  }
+  ```
+- The fetch function takes its URL from `API_PATHS`, calls `handleApiError(res)`, and returns typed data. Writes are `use<Action>Mutation`; reads are `use<Thing>Query` with their key from `src/lib/query-keys.ts`.
+- The request hook accepts options (`RequestMutationOptions` from `src/types.ts`) so the screen hook adds its own behaviour (`onSuccess: () => router.push(...)`). Screen and component hooks never call `fetch` themselves — they import the request hook.
+
+## API errors: backend is technical, frontend chooses the words
+
+- Every route handler error is `apiError(code, technicalMessage)` from `src/lib/api-error.ts`, returning `{ code, error }`. `code` is a stable `ApiErrorCode` (in `src/types.ts`; the code also sets the HTTP status). `error` is for debugging — be as technical as useful, and never write user-facing copy there. New error case → add a code to `ApiErrorCode` and `STATUS_BY_CODE`.
+- The frontend never displays the API's `error` text. Fetches call `handleApiError(res)` from `src/lib/api-request-error.ts`; hooks turn the failure into words with `toUserMessage(error, SCREEN_ERROR_MESSAGES)` from `src/lib/user-error-messages.ts`, where `SCREEN_ERROR_MESSAGES` maps codes to that screen's wording in its `const.ts`. Unmapped codes fall back to the generic / session-expired messages.
