@@ -2,6 +2,7 @@
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { loginPathFor, NEXT_PARAM, toSafeNextPath } from "@/lib/next-path";
 import { PATHNAMES } from "@/lib/pathnames";
 import { isValidSessionToken, SESSION_COOKIE } from "@/lib/session";
 
@@ -27,7 +28,7 @@ export const config = {
 // - NextResponse.next()        → "carry on", let Next.js render the page that was asked for
 export async function proxy(request: NextRequest) {
   // e.g. for http://localhost:3000/recipes?x=1 → pathname = "/recipes"
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
 
   // The browser sends the session cookie automatically with every request (set by /api/login).
   // isValidSessionToken checks its signature and expiry, so a missing, fake or expired cookie → false.
@@ -41,17 +42,19 @@ export async function proxy(request: NextRequest) {
   // This check must come before case 2 — otherwise a logged-out user visiting /login
   // would be redirected to /login again, forever.
   if (pathname === PATHNAMES.login) {
+    const next = toSafeNextPath(request.nextUrl.searchParams.get(NEXT_PARAM));
     return isLoggedIn
-      ? // already logged in → no point showing the form, send them home
-        NextResponse.redirect(new URL(PATHNAMES.homepage, request.url))
+      ? // already logged in → no point showing the form, go where they were heading (or home)
+        NextResponse.redirect(new URL(next ?? PATHNAMES.homepage, request.url))
       : // logged out → show the login page as normal
         NextResponse.next();
   }
 
-  // Case 2: any other page, and the user is logged out → send them to the login page.
-  // After logging in, useLoginForm always sends them to the homepage.
+  // Case 2: any other page, and the user is logged out → send them to the login page,
+  // remembering this page (with its query, e.g. a link shared from the phone's share
+  // sheet: /recipes/add?url=…) so useLoginForm can bring them back after logging in.
   if (!isLoggedIn) {
-    return NextResponse.redirect(new URL(PATHNAMES.login, request.url));
+    return NextResponse.redirect(new URL(loginPathFor(pathname + search), request.url));
   }
 
   // Case 3: any other page, and the user is logged in → render the page as normal.

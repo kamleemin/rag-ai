@@ -25,8 +25,6 @@ export type ApiErrorCode =
   | "UNAUTHORIZED"
   | "WRONG_PASSWORD"
   | "NOT_FOUND"
-  | "EXTRACTION_FAILED"
-  | "EXTRACTION_SERVICE_UNREACHABLE"
   | "ALREADY_SAVED"
   /** Another ingredient in your list already has this name. */
   | "INGREDIENT_EXISTS"

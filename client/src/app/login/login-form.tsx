@@ -3,9 +3,9 @@
 import { Input } from "@/components/ui/input";
 import { useLoginForm } from "./use-login-form";
 
-export default function LoginForm() {
+export default function LoginForm({ next }: { next: string | null }) {
   const { password, setPassword, handleSubmit, isLoggingIn, loginErrorMessage } =
-    useLoginForm();
+    useLoginForm(next);
 
   return (
     <form

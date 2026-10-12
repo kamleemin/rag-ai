@@ -1,5 +1,6 @@
 "use client";
 
+import { use } from "react";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/common/page-header";
 import SegmentedTabs from "@/components/common/segmented-tabs";
@@ -7,21 +8,30 @@ import RecipeForm from "@/components/recipe/recipe-form";
 import { ADD_RECIPE_TABS, AddRecipeTab } from "./const";
 import { useAddRecipeForm } from "./use-add-recipe-form";
 import GeneratingRecipe from "./generating-recipe";
+import PendingVideosBanner from "./pending-videos-banner";
 
-export default function AddRecipePage() {
+export default function AddRecipePage({ searchParams }: PageProps<"/recipes/add">) {
+  // A link shared from the phone's share sheet opens /recipes/add?url=…
+  const { url } = use(searchParams);
   const {
     tab,
     setTab,
     videoUrl,
     setVideoUrl,
+    canGenerate,
+    isServerUnreachable,
+    submitLabel,
+    isSubmittingLink,
     isGenerating,
-    generateErrorMessage,
+    generate,
+    videoLinkErrorMessage,
+    savedForLaterNotice,
     submitVideoLink,
     saveManualRecipe,
     isSavingRecipe,
     saveRecipeErrorMessage,
     handleVideoLinkKeyDown,
-  } = useAddRecipeForm();
+  } = useAddRecipeForm(typeof url === "string" ? url : null);
 
   if (isGenerating) {
     return (
@@ -37,6 +47,11 @@ export default function AddRecipePage() {
       <PageHeader backHref="/recipes" title="Add a Recipe" />
 
       <div className="mx-auto max-w-[720px] px-5 py-8 pb-20 sm:px-10">
+        <PendingVideosBanner
+          canGenerate={canGenerate}
+          isServerUnreachable={isServerUnreachable}
+          onGenerate={generate}
+        />
         <SegmentedTabs tabs={ADD_RECIPE_TABS} value={tab} onChange={setTab} className="mb-7" />
 
         {tab === AddRecipeTab.Video && (
@@ -45,10 +60,18 @@ export default function AddRecipePage() {
               Paste a video link
             </h3>
             <p className="mb-5 text-sm leading-relaxed text-body-text">
-              Paste a TikTok link — the tool will extract and structure the
-              recipe automatically. You&apos;ll review and confirm every
-              field before it&apos;s saved; anything that couldn&apos;t be
-              read is simply left blank.
+              {isServerUnreachable ? (
+                <>
+                  Your PC&apos;s recipe server isn&apos;t reachable from this device, so the
+                  link is saved for later — you&apos;ll turn it into a recipe on your PC.
+                </>
+              ) : (
+                <>
+                  Paste a TikTok link — the tool will extract and structure the recipe
+                  automatically. You&apos;ll review and confirm every field before it&apos;s
+                  saved; anything that couldn&apos;t be read is simply left blank.
+                </>
+              )}
             </p>
             <div className="flex flex-wrap gap-3">
               <Input
@@ -61,15 +84,19 @@ export default function AddRecipePage() {
               <button
                 type="button"
                 onClick={submitVideoLink}
-                className="rounded-md bg-green px-6 py-3 font-sans text-sm font-semibold text-white hover:bg-green-hover"
+                disabled={!videoUrl.trim() || isSubmittingLink}
+                className="rounded-md bg-green px-6 py-3 font-sans text-sm font-semibold text-white hover:bg-green-hover disabled:opacity-60"
               >
-                Generate
+                {submitLabel}
               </button>
             </div>
-            {generateErrorMessage && (
-              <p className="mt-3 text-[13px] text-red-600">
-                {generateErrorMessage}
+            {videoLinkErrorMessage && (
+              <p role="alert" className="mt-3 text-[13px] text-red-600">
+                {videoLinkErrorMessage}
               </p>
+            )}
+            {savedForLaterNotice && (
+              <p className="mt-3 text-[13px] text-green">{savedForLaterNotice}</p>
             )}
           </div>
         )}
