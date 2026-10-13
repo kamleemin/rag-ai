@@ -2,7 +2,11 @@ import "dotenv/config";
 import * as z from "zod";
 
 const envSchema = z.object({
-  PORT: z.string().default("8080"),
+  PORT: z.coerce.number().default(8080),
+  // Only connections from this PC by default. Phones reach it through Tailscale
+  // (`tailscale serve` forwards to 127.0.0.1), never straight over Wi-Fi — this server has
+  // no login, so it must not listen on the network.
+  HOST: z.string().default("127.0.0.1"),
   DATABASE_URL: z.url(),
   // Comma-separated browser origins allowed to call this server (the Vercel app + local dev).
   // "*" matches one branch name, e.g. https://kamasak-git-*-yourteam.vercel.app (see cors.ts).

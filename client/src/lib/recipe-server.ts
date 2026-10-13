@@ -1,6 +1,10 @@
-import { LOCAL_SERVER_URL } from "./api-paths";
+import { clientEnv } from "@/data/clientEnv";
 import { ApiRequestError, handleApiError } from "./api-request-error";
 import { captureException } from "./capture-exception";
+
+// The recipe server on your PC (server/ workspace). Its route paths are LOCAL_SERVER_PATHS
+// from @rag-ai/shared, since the server defines the same routes.
+const RECIPE_SERVER_URL = clientEnv.NEXT_PUBLIC_RECIPE_SERVER_URL;
 
 /**
  * Calls the recipe server on the PC straight from the browser (the cloud never calls the
@@ -10,7 +14,7 @@ import { captureException } from "./capture-exception";
 export async function fetchRecipeServer<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`${LOCAL_SERVER_URL}${path}`, init);
+    res = await fetch(`${RECIPE_SERVER_URL}${path}`, init);
   } catch (error) {
     // fetch only throws when the server can't be reached (off, another device, or blocked
     // by the browser). Expected on a phone — callers show a message for this code.
@@ -18,7 +22,7 @@ export async function fetchRecipeServer<T>(path: string, init?: RequestInit): Pr
     throw new ApiRequestError(
       0,
       "RECIPE_SERVER_UNREACHABLE",
-      `Could not reach ${LOCAL_SERVER_URL}${path}: ${String(error)}`
+      `Could not reach ${RECIPE_SERVER_URL}${path}: ${String(error)}`
     );
   }
   await handleApiError(res);

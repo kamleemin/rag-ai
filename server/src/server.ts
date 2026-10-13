@@ -96,8 +96,8 @@ app.post(LOCAL_SERVER_PATHS.extractTikTok, async (req, res) => {
   res.json(response);
 });
 
-app.listen(env.PORT, () => {
-  console.log(`kamasak server listening on port ${env.PORT}`);
+app.listen(env.PORT, env.HOST, () => {
+  console.log(`kamasak server listening on http://${env.HOST}:${env.PORT}`);
   embedMissingRecipes()
     .then((count) => count && console.log(`Embedded ${count} recipe(s) missing an embedding`))
     .catch((err) => console.error("Failed to backfill recipe embeddings:", err));
