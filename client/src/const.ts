@@ -8,6 +8,12 @@ export const SAVE_RECIPE_ERROR_MESSAGES: Partial<Record<ApiErrorCode, string>> =
   ALREADY_SAVED: "This video's recipe is already saved.",
 };
 
+// What Generate says when reading a video fails (the add page and the waiting-videos banner).
+export const GENERATE_RECIPE_ERROR_MESSAGES: Partial<Record<ApiErrorCode, string>> = {
+  RECIPE_SERVER_UNREACHABLE:
+    "Couldn't reach the recipe server on your PC. Start it and try again, or save the link for later.",
+};
+
 // What "+ Add new category" in the recipe form says when adding fails.
 export const ADD_CATEGORY_ERROR_MESSAGES: Partial<Record<ApiErrorCode, string>> = {
   INVALID_BODY: "Category names can be up to 40 characters.",
